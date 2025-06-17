@@ -1,28 +1,829 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Page</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>V.E.R.A - Virtual Expert for Responsive Assistance</title>
+  <style>
+    /* SCSS converted to CSS */
+    :root {
+      --primary-color: #2196f3;
+      --secondary-color: #32cd32;
+      --dark-bg: #2e2e2e;
+      --dark-element: #444444;
+      --light-bg: #f8f8f8;
+      --transition-speed: 0.3s;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-image: url('https://wallpapercave.com/wp/wp1913256.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color var(--transition-speed);
+    }
+
+    .dark-mode {
+      background-color: var(--dark-bg);
+      color: white;
+    }
+
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://wallpapercave.com/wp/wp1913262.jpg');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease-out;
+    }
+
+    .splash-content {
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 2rem 4rem;
+      border-radius: 1rem;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .splash-title {
+      font-size: 3rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+
+    .app-container {
+      max-width: 1000px;
+      height: 100vh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
+    }
+
+    .header {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      border-bottom-left-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-title {
+      font-size: 2rem;
+      font-weight: bold;
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .settings-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: transform var(--transition-speed);
+    }
+
+    .settings-btn:hover {
+      transform: rotate(30deg);
+    }
+
+    .chat-container {
+      flex: 1;
+      background-color: rgba(255, 255, 255, 0.9);
+      margin: 1rem;
+      border-radius: 1rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: background-color var(--transition-speed);
+    }
+
+    .dark-mode .chat-container {
+      background-color: rgba(46, 46, 46, 0.9);
+    }
+
+    .chat-display {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      animation: fadeIn 0.5s;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .timestamp {
+      font-size: 0.8rem;
+      color: #888;
+      margin-right: 0.5rem;
+    }
+
+    .user-message {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .user-text {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.8rem 1rem;
+      border-radius: 1.2rem 0 1.2rem 1.2rem;
+      max-width: 80%;
+      word-wrap: break-word;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .bot-message {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .bot-text {
+      background-color: #e6e6e6;
+      color: #333;
+      padding: 0.8rem 1rem;
+      border-radius: 0 1.2rem 1.2rem 1.2rem;
+      max-width: 80%;
+      word-wrap: break-word;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark-mode .bot-text {
+      background-color: #3a3a3a;
+      color: #f0f0f0;
+    }
+
+    .typing-indicator {
+      display: flex;
+      padding: 0.8rem 1rem;
+      background-color: #e6e6e6;
+      border-radius: 0 1.2rem 1.2rem 1.2rem;
+      max-width: 5rem;
+    }
+
+    .dark-mode .typing-indicator {
+      background-color: #3a3a3a;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #888;
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: typingAnimation 1.5s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.6s;
+    }
+
+    @keyframes typingAnimation {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+      }
+
+      30% {
+        transform: translateY(-5px);
+      }
+    }
+
+    .input-container {
+      padding: 1rem;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      border-top: 1px solid #eee;
+      transition: background-color var(--transition-speed);
+    }
+
+    .dark-mode .input-container {
+      background-color: var(--dark-element);
+      border-top: 1px solid #555;
+    }
+
+    .text-input {
+      flex: 1;
+      padding: 0.8rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 2rem;
+      outline: none;
+      font-size: 1rem;
+      transition: border var(--transition-speed), background-color var(--transition-speed);
+    }
+
+    .text-input:focus {
+      border-color: var(--primary-color);
+    }
+
+    .dark-mode .text-input {
+      background-color: #333;
+      color: white;
+      border-color: #555;
+    }
+
+    .voice-btn,
+    .send-btn,
+    .history-btn {
+      background: none;
+      border: none;
+      width: 40px;
+      height: 40px;
+      margin-left: 0.8rem;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color var(--transition-speed);
+    }
+
+    .voice-btn:hover,
+    .send-btn:hover,
+    .history-btn:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .dark-mode .voice-btn:hover,
+    .dark-mode .send-btn:hover,
+    .dark-mode .history-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .voice-btn img,
+    .send-btn img,
+    .history-btn img {
+      width: 24px;
+      height: 24px;
+    }
+
+    .voice-active {
+      background-color: rgba(255, 0, 0, 0.1);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+      }
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      transition: background-color var(--transition-speed);
+    }
+
+    .dark-mode .modal-content {
+      background-color: var(--dark-bg);
+      color: white;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 1rem;
+    }
+
+    .dark-mode .modal-header {
+      border-bottom: 1px solid #555;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .history-list {
+      list-style: none;
+    }
+
+    .history-item {
+      padding: 0.8rem;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color var(--transition-speed);
+    }
+
+    .dark-mode .history-item {
+      border-bottom: 1px solid #555;
+    }
+
+    .history-item:hover {
+      background-color: #f5f5f5;
+    }
+
+    .dark-mode .history-item:hover {
+      background-color: #3a3a3a;
+    }
+
+    .clear-history {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background-color var(--transition-speed);
+    }
+
+    .clear-history:hover {
+      background-color: #d32f2f;
+    }
+
+    @media (max-width: 768px) {
+      .app-container {
+        height: 100%;
+      }
+
+      .header-title {
+        font-size: 1.5rem;
+      }
+
+      .user-text,
+      .bot-text {
+        max-width: 90%;
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <div class="login-container">
-    <div class="login-box">
-      <h2>Login</h2>
-      <form id="loginForm">
-        <div class="textbox">
-          <input type="text" id="username" placeholder="Username" required />
-        </div>
-        <div class="textbox">
-          <input type="password" id="password" placeholder="Password" required />
-        </div>
-        <button type="submit" class="btn">Login</button>
-        <p id="error-message"></p>
-      </form>
+  <!-- Splash Screen -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-content">
+      <h1 class="splash-title">V.E.R.A</h1>
+      <p>Virtual Expert for Responsive Assistance</p>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Main App -->
+  <div class="app-container" id="appContainer">
+    <header class="header">
+      <div></div>
+      <h1 class="header-title">V.E.R.A</h1>
+      <button class="settings-btn" id="settingsBtn">⚙</button>
+    </header>
+
+    <div class="chat-container">
+      <div class="chat-display" id="chatDisplay"></div>
+
+      <div class="input-container">
+        <button class="history-btn" id="historyBtn">
+          <img src="https://cdn-icons-png.flaticon.com/512/2099/2099190.png" alt="History">
+        </button>
+        <input type="text" class="text-input" id="textInput" placeholder="Type your command here...">
+        <button class="voice-btn" id="voiceBtn">
+          <img src="https://icones.pro/wp-content/uploads/2021/12/icone-de-microphone-bleue.png" alt="Voice">
+        </button>
+        <button class="send-btn" id="sendBtn">
+          <img src="https://cdn-icons-png.flaticon.com/512/3106/3106794.png" alt="Send">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div class="modal" id="historyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Search History</h2>
+        <button class="close-btn" id="closeHistoryBtn">&times;</button>
+      </div>
+      <ul class="history-list" id="historyList"></ul>
+      <button class="clear-history" id="clearHistoryBtn">Clear History</button>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const splashScreen = document.getElementById('splashScreen');
+    const appContainer = document.getElementById('appContainer');
+    const chatDisplay = document.getElementById('chatDisplay');
+    const textInput = document.getElementById('textInput');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const historyBtn = document.getElementById('historyBtn');
+    const historyModal = document.getElementById('historyModal');
+    const historyList = document.getElementById('historyList');
+    const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+    // Global Variables
+    let darkMode = false;
+    let isListening = false;
+    let history = [];
+    let speechRecognition = null;
+    let speechSynthesis = window.speechSynthesis;
+    let voices = [];
+    
+    // Flask API endpoints
+    const API_URL = "http://localhost:5000/api";
+
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', () => {
+      // Show splash screen for 2 seconds
+      setTimeout(() => {
+        splashScreen.style.opacity = '0';
+        appContainer.style.opacity = '1';
+        setTimeout(() => {
+          splashScreen.style.display = 'none';
+        }, 500);
+      }, 2000);
+
+      // Initialize speech recognition if available
+      if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        speechRecognition = new SpeechRecognition();
+        speechRecognition.continuous = false;
+        speechRecognition.interimResults = false;
+        speechRecognition.lang = 'en-US';
+
+        speechRecognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          textInput.value = transcript;
+          stopListening();
+          sendMessage();
+        };
+
+        speechRecognition.onerror = (event) => {
+          console.error('Speech recognition error', event.error);
+          stopListening();
+          addBotMessage("Sorry, I couldn't understand that. Please try again or type your command.");
+        };
+
+        speechRecognition.onend = () => {
+          stopListening();
+        };
+      } else {
+        voiceBtn.style.display = 'none';
+        console.warn('Speech recognition not supported');
+      }
+
+      // Initialize speech synthesis
+      speechSynthesis.onvoiceschanged = () => {
+        voices = speechSynthesis.getVoices();
+      };
+
+      // Load history from the server
+      fetchHistory();
+
+      // Display greeting message
+      setTimeout(() => {
+        addBotMessage("Hello! I'm VERA, your Virtual Expert for Responsive Assistance. How can I help you today?");
+        speak("Hello! I'm VERA, your Virtual Expert for Responsive Assistance. How can I help you today?");
+      }, 2500);
+    });
+
+    // API Functions
+    async function fetchHistory() {
+      try {
+        const response = await fetch(`${API_URL}/history`);
+        const data = await response.json();
+        history = data.history || [];
+        updateHistoryList();
+      } catch (error) {
+        console.error('Error fetching history', error);
+      }
+    }
+
+    async function clearHistoryFromServer() {
+      try {
+        await fetch(`${API_URL}/history`, {
+          method: 'DELETE'
+        });
+        history = [];
+        updateHistoryList();
+      } catch (error) {
+        console.error('Error clearing history', error);
+      }
+    }
+
+    async function sendQueryToServer(query) {
+      addBotMessage('', true); // Show typing indicator
+      
+      try {
+        const response = await fetch(`${API_URL}/query`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query })
+        });
+        
+        const data = await response.json();
+        
+        // Remove typing indicator and add response
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
+        
+        addBotMessage(data.response);
+        speak(data.response);
+        
+        // Refresh history after sending a query
+        fetchHistory();
+      } catch (error) {
+        console.error('Error sending query to server', error);
+        
+        // Remove typing indicator
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
+        
+        addBotMessage("Sorry, I couldn't connect to my backend server. Please check if the server is running.");
+      }
+    }
+
+    // Event Listeners
+    textInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    voiceBtn.addEventListener('click', toggleListening);
+
+    settingsBtn.addEventListener('click', toggleDarkMode);
+
+    historyBtn.addEventListener('click', () => {
+      historyModal.style.display = 'flex';
+      updateHistoryList();
+    });
+
+    closeHistoryBtn.addEventListener('click', () => {
+      historyModal.style.display = 'none';
+    });
+
+    clearHistoryBtn.addEventListener('click', () => {
+      clearHistoryFromServer();
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target === historyModal) {
+        historyModal.style.display = 'none';
+      }
+    });
+
+    // Functions
+    function sendMessage() {
+      const message = textInput.value.trim();
+      if (!message) return;
+
+      addUserMessage(message);
+      textInput.value = '';
+      
+      // Send message to server
+      sendQueryToServer(message);
+    }
+
+    function toggleListening() {
+      if (!speechRecognition) return;
+
+      if (isListening) {
+        stopListening();
+      } else {
+        startListening();
+      }
+    }
+
+    function startListening() {
+      isListening = true;
+      voiceBtn.classList.add('voice-active');
+      addBotMessage("Listening...");
+      try {
+        speechRecognition.start();
+      } catch (error) {
+        console.error('Speech recognition error', error);
+        stopListening();
+      }
+    }
+
+    function stopListening() {
+      isListening = false;
+      voiceBtn.classList.remove('voice-active');
+      try {
+        speechRecognition.stop();
+      } catch (error) {
+        console.error('Error stopping speech recognition', error);
+      }
+    }
+
+    function toggleDarkMode() {
+      darkMode = !darkMode;
+      document.body.classList.toggle('dark-mode', darkMode);
+    }
+
+    function addUserMessage(text) {
+      const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message user-message';
+
+      messageDiv.innerHTML = `
+        <div class="user-text">
+          <span class="timestamp">${timestamp}</span>
+          ${text}
+        </div>
+      `;
+
+      chatDisplay.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    function addBotMessage(text, isTyping = false) {
+      if (isTyping) {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot-message';
+        typingDiv.id = 'typingIndicator';
+
+        typingDiv.innerHTML = `
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        `;
+
+        chatDisplay.appendChild(typingDiv);
+        scrollToBottom();
+        return;
+      }
+
+      // Remove typing indicator if exists
+      const typingIndicator = document.getElementById('typingIndicator');
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+
+      const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message bot-message';
+
+      messageDiv.innerHTML = `
+        <div class="bot-text">
+          <span class="timestamp">${timestamp}</span>
+          ${text}
+        </div>
+      `;
+
+      chatDisplay.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      chatDisplay.scrollTop = chatDisplay.scrollHeight;
+    }
+
+    function speak(text) {
+      if (!speechSynthesis) return;
+
+      // Cancel any ongoing speech
+      speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      // Try to find a female voice (similar to Microsoft Zira)
+      if (voices.length) {
+        const femaleVoice = voices.find(voice =>
+          voice.name.includes('female') ||
+          voice.name.includes('Samantha') ||
+          voice.name.includes('Zira')
+        );
+
+        if (femaleVoice) {
+          utterance.voice = femaleVoice;
+        }
+      }
+
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      speechSynthesis.speak(utterance);
+    }
+
+    function updateHistoryList() {
+      historyList.innerHTML = '';
+
+      if (history.length === 0) {
+        const emptyItem = document.createElement('li');
+        emptyItem.className = 'history-item';
+        emptyItem.textContent = 'No history yet';
+        historyList.appendChild(emptyItem);
+        return;
+      }
+
+      // Display most recent items first
+      [...history].reverse().forEach(item => {
+        const historyItem = document.createElement('li');
+        historyItem.className = 'history-item';
+        historyItem.textContent = item.query;
+        historyItem.addEventListener('click', () => {
+          textInput.value = item.query;
+          historyModal.style.display = 'none';
+        });
+        historyList.appendChild(historyItem);
+      });
+    }
+  </script>
 </body>
+
 </html>
