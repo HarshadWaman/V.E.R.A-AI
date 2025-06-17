@@ -10,7 +10,7 @@ document.getElementById('loginForm').addEventListener('submit', function (event)
       errorMessage.textContent = 'Please fill in both fields!';
     } else {
       // Here you can add more complex validation or send a request to the server
-      if (username === 'harshad' && password === '9902') {
+      if (username === 'harshad waman' && password === '9011818144') {
         errorMessage.textContent = '';
         alert('Login Successful!');
       } else {
