@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>V.E.R.A</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h2>V.E.R.A</h2>
+  <form id="searchForm">
+    <input type="text" id="queryInput" placeholder="Type your question here..." required />
+    <input type="submit" value="Search" />
+  </form>
+
+  <div class="response" id="responseBox" style="display: none;">
+    <h3>You asked:</h3>
+    <p id="userQuestion"></p>
+    <h3>Answer:</h3>
+    <p id="answerText"></p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
