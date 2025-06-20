@@ -4,17 +4,63 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>V.E.R.A</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="chat-container">
-    <div class="chat-header">V.E.R.A</div>
-    <div id="chatBox" class="chat-box"></div>
-    <form id="searchForm" class="chat-input-form">
-      <input type="text" id="queryInput" placeholder="Type a message..." required />
-      <button type="submit">Send</button>
-    </form>
+  <div class="header">
+    <h1>V.E.R.A</h1>
   </div>
+
+  <div class="chat-container">
+    <div class="chat-messages" id="chatMessages">
+      <div class="welcome-section" id="welcomeSection">
+        <h2 class="welcome-title">How can I help you today?</h2>
+        <p class="welcome-subtitle">Ask me anything - I can help with calculations, provide information, or just have a conversation.</p>
+        
+        <div class="example-prompts">
+          <div class="example-prompt" onclick="fillPrompt('What time is it?')">
+            <div class="example-prompt-title">Current Time</div>
+            <div class="example-prompt-subtitle">Get the current time</div>
+          </div>
+          <div class="example-prompt" onclick="fillPrompt('What is 25 * 17?')">
+            <div class="example-prompt-title">Calculator</div>
+            <div class="example-prompt-subtitle">Solve math problems</div>
+          </div>
+          <div class="example-prompt" onclick="fillPrompt('What is the weather like?')">
+            <div class="example-prompt-title">Weather</div>
+            <div class="example-prompt-subtitle">Search for weather information</div>
+          </div>
+          <div class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
+            <div class="example-prompt-title">Learn</div>
+            <div class="example-prompt-subtitle">Get information on any topic</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-container">
+        <form id="searchForm" class="input-wrapper">
+          <textarea 
+            id="queryInput" 
+            class="chat-input" 
+            placeholder="Message V.E.R.A..."
+            rows="1"
+            required
+          ></textarea>
+          <div class="input-actions">
+            <button type="button" id="micButton" class="mic-button" title="Voice input">🎤</button>
+            <button type="submit" id="sendButton" class="send-button" title="Send message">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
