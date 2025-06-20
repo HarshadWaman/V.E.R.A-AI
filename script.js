@@ -10,11 +10,11 @@ form.addEventListener('submit', async function(event) {
   if (!query) return;
 
   // Open Google Search in new tab
-  window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+  //window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
 
   // Speak the query
   const synth = window.speechSynthesis;
-  const utter = new SpeechSynthesisUtterance(`Searching for ${query} in your browser`);
+  const utter = new SpeechSynthesisUtterance(`Searching for ${query} `);
   utter.rate = 1;
   synth.speak(utter);
 
