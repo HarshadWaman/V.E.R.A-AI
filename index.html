@@ -7,19 +7,14 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h2>V.E.R.A</h2>
-  <form id="searchForm">
-    <input type="text" id="queryInput" placeholder="Type your question here..." required />
-    <input type="submit" value="Search" />
-  </form>
-
-  <div class="response" id="responseBox" style="display: none;">
-    <h3>You asked:</h3>
-    <p id="userQuestion"></p>
-    <h3>Answer:</h3>
-    <p id="answerText"></p>
+  <div class="chat-container">
+    <div class="chat-header">V.E.R.A</div>
+    <div id="chatBox" class="chat-box"></div>
+    <form id="searchForm" class="chat-input-form">
+      <input type="text" id="queryInput" placeholder="Type a message..." required />
+      <button type="submit">Send</button>
+    </form>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
