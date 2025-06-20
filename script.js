@@ -1,27 +1,54 @@
 const form = document.getElementById('searchForm');
 const queryInput = document.getElementById('queryInput');
-const responseBox = document.getElementById('responseBox');
-const userQuestion = document.getElementById('userQuestion');
-const answerText = document.getElementById('answerText');
+const chatBox = document.getElementById('chatBox');
 
-form.addEventListener('submit', async function(event) {
+form.addEventListener('submit', async function (event) {
   event.preventDefault();
   const query = queryInput.value.trim();
   if (!query) return;
 
-  // Open Google Search in new tab
-  //window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+  addMessage(query, 'user');
+  queryInput.value = '';
 
-  // Speak the query
   const synth = window.speechSynthesis;
-  const utter = new SpeechSynthesisUtterance(`Searching for ${query} `);
-  utter.rate = 1;
-  synth.speak(utter);
+  const lowerQuery = query.toLowerCase();
 
-  // Show question
-  userQuestion.textContent = query;
+  // Time
+  if (lowerQuery.includes("time")) {
+    const time = new Date().toLocaleTimeString();
+    addMessage(`Current time is ${time}`, 'bot');
+    synth.speak(new SpeechSynthesisUtterance(`Current time is ${time}`));
+    return;
+  }
 
-  // Try to fetch answer from DuckDuckGo
+  // Date
+  if (lowerQuery.includes("date")) {
+    const date = new Date().toLocaleDateString();
+    addMessage(`Today's date is ${date}`, 'bot');
+    synth.speak(new SpeechSynthesisUtterance(`Today's date is ${date}`));
+    return;
+  }
+
+  // Simple Math Calculation
+  const mathPattern = /^[\d+\-*/ ().]+$/;
+  if (mathPattern.test(query)) {
+    try {
+      const result = eval(query);
+      addMessage(`The answer is ${result}`, 'bot');
+      synth.speak(new SpeechSynthesisUtterance(`The answer is ${result}`));
+      return;
+    } catch {
+      const errorMsg = "Sorry, I couldn't calculate that.";
+      addMessage(errorMsg, 'bot');
+      synth.speak(new SpeechSynthesisUtterance(errorMsg));
+      return;
+    }
+  }
+
+  // Speak user query before searching
+  synth.speak(new SpeechSynthesisUtterance(`Searching for ${query}`));
+
+  // DuckDuckGo quick answer
   try {
     const proxy = 'https://api.allorigins.win/get?url=';
     const duckUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
@@ -34,15 +61,19 @@ form.addEventListener('submit', async function(event) {
     const snippet = doc.querySelector('.result__snippet');
 
     let answer = snippet ? snippet.textContent.trim() : "Sorry, I couldn't find a clear answer.";
-    answerText.textContent = answer;
-
-    const speakAnswer = new SpeechSynthesisUtterance(answer);
-    synth.speak(speakAnswer);
+    addMessage(answer, 'bot');
+    synth.speak(new SpeechSynthesisUtterance(answer));
   } catch (e) {
     const fallback = "Sorry, I couldn't fetch the answer.";
-    answerText.textContent = fallback;
+    addMessage(fallback, 'bot');
     synth.speak(new SpeechSynthesisUtterance(fallback));
   }
-
-  responseBox.style.display = 'block';
 });
+
+function addMessage(text, sender) {
+  const bubble = document.createElement('div');
+  bubble.classList.add('chat-bubble', sender === 'user' ? 'user-message' : 'bot-message');
+  bubble.textContent = text;
+  chatBox.appendChild(bubble);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
