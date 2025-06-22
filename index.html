@@ -4,63 +4,118 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>V.E.R.A</title>
+  <!-- Favicon link -->
+  <link rel="icon" type="image/png" href="veraicon.jpg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="header">
-    <h1>V.E.R.A</h1>
-  </div>
-
-  <div class="chat-container">
-    <div class="chat-messages" id="chatMessages">
-      <div class="welcome-section" id="welcomeSection">
-        <h2 class="welcome-title">How can I help you today?</h2>
-        <p class="welcome-subtitle">Ask me anything - I can help with calculations, provide information, or just have a conversation.</p>
-        
-        <div class="example-prompts">
-          <div class="example-prompt" onclick="fillPrompt('What time is it?')">
-            <div class="example-prompt-title">Current Time</div>
-            <div class="example-prompt-subtitle">Get the current time</div>
-          </div>
-          <div class="example-prompt" onclick="fillPrompt('What is 25 * 17?')">
-            <div class="example-prompt-title">Calculator</div>
-            <div class="example-prompt-subtitle">Solve math problems</div>
-          </div>
-          <div class="example-prompt" onclick="fillPrompt('What is the weather like?')">
-            <div class="example-prompt-title">Weather</div>
-            <div class="example-prompt-subtitle">Search for weather information</div>
-          </div>
-          <div class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
-            <div class="example-prompt-title">Learn</div>
-            <div class="example-prompt-subtitle">Get information on any topic</div>
-          </div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">V.E.R.A</h2>
+      <button class="sidebar-toggle" id="sidebarToggle">×</button>
+    </div>
+    
+    <div class="sidebar-content">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Actions</div>
+        <button class="sidebar-button" id="newChatBtn">
+          <span>💬</span>
+          New Chat
+        </button>
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Search Chats</div>
+        <input type="text" class="search-box" id="searchChats" placeholder="Search your chats...">
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Chat History</div>
+        <div class="chat-history" id="chatHistory">
+          <!-- Chat history items will be populated here -->
+        </div>
+        <div class="clear-history-section">
+          <button class="clear-history-btn" id="clearHistoryBtn">
+            <span>🗑️</span>
+            Clear All History
+          </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="input-section">
-      <div class="input-container">
-        <form id="searchForm" class="input-wrapper">
-          <textarea 
-            id="queryInput" 
-            class="chat-input" 
-            placeholder="Message V.E.R.A..."
-            rows="1"
-            required
-          ></textarea>
-          <div class="input-actions">
-            <button type="button" id="micButton" class="mic-button" title="Voice input">🎤</button>
-            <button type="submit" id="sendButton" class="send-button" title="Send message">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-              </svg>
-            </button>
+  <div class="main-content">
+    <div class="header">
+      <button class="mobile-toggle" id="mobileToggle">☰</button>
+      <h1>V.E.R.A</h1>
+    </div>
+
+    <div class="chat-container">
+      <div class="chat-messages" id="chatMessages">
+        <div class="welcome-section" id="welcomeSection">
+          <h2 class="welcome-title">How can I help you today?</h2>
+          <p class="welcome-subtitle">Ask me anything - I can help with calculations, provide information, or just have a conversation.</p>
+          
+          <div class="example-prompts">
+            <div class="example-prompt" onclick="fillPrompt('What time is it?')">
+              <div class="example-prompt-title">Current Time</div>
+              <div class="example-prompt-subtitle">Get the current time</div>
+            </div>
+            <div class="example-prompt" onclick="fillPrompt('What is 25 * 17?')">
+              <div class="example-prompt-title">Calculator</div>
+              <div class="example-prompt-subtitle">Solve math problems</div>
+            </div>
+            <div class="example-prompt" onclick="fillPrompt('What is the weather like?')">
+              <div class="example-prompt-title">Weather</div>
+              <div class="example-prompt-subtitle">Search for weather information</div>
+            </div>
+            <div class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
+              <div class="example-prompt-title">Learn</div>
+              <div class="example-prompt-subtitle">Get information on any topic</div>
+            </div>
           </div>
-        </form>
+        </div>
+      </div>
+
+      <div class="input-section">
+        <div class="input-container">
+          <form id="searchForm" class="input-wrapper">
+            <textarea 
+              id="queryInput" 
+              class="chat-input" 
+              placeholder="Message V.E.R.A..."
+              rows="1"
+              required
+            ></textarea>
+            <div class="input-actions">
+              <button type="button" id="micButton" class="mic-button" title="Voice input">🎤</button>
+              <button type="submit" id="sendButton" class="send-button" title="Send message">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div class="confirm-dialog" id="confirmDialog">
+    <div class="confirm-content">
+      <h3 class="confirm-title" id="confirmTitle">Confirm Action</h3>
+      <p class="confirm-message" id="confirmMessage">Are you sure you want to proceed?</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn cancel" id="confirmCancel">Cancel</button>
+        <button class="confirm-btn delete" id="confirmDelete">Delete</button>
       </div>
     </div>
   </div>
 
   <script src="script.js"></script>
+   
 </body>
 </html>
