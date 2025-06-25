@@ -1,9 +1,10 @@
-// --- Element References ---
 const form = document.getElementById('searchForm');
 const queryInput = document.getElementById('queryInput');
 const chatMessages = document.getElementById('chatMessages');
 const sendButton = document.getElementById('sendButton');
 const micButton = document.getElementById('micButton');
+const micIcon = document.getElementById('micIcon');
+const stopIcon = document.getElementById('stopIcon');
 const welcomeSection = document.getElementById('welcomeSection');
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebarToggle');
@@ -18,21 +19,54 @@ const confirmTitle = document.getElementById('confirmTitle');
 const confirmMessage = document.getElementById('confirmMessage');
 const confirmCancel = document.getElementById('confirmCancel');
 const confirmDelete = document.getElementById('confirmDelete');
+const welcomeOverlay = document.getElementById('welcomeOverlay');
+const loginBtn = document.getElementById('loginBtn');
+const loginModal = document.getElementById('loginModal');
+const closeLoginModal = document.getElementById('closeLoginModal');
+const loginForm = document.getElementById('loginForm');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeIcon = document.getElementById('theme-icon');
+const themeText = document.getElementById('theme-text');
+const logoutSection = document.getElementById('logoutSection');
+const logoutBtn = document.getElementById('logoutBtn');
+
 
 let recognition;
 let isRecording = false;
+let isSpeaking = false;
 let currentChatId = null;
 let chatData = [];
 let pendingDeleteAction = null;
+let userData = {};
+let currentUser = null;
+const synth = window.speechSynthesis;
+
+// Global variable to store YouTube link for download options
+let youtubeLinkToDownload = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Show welcome screen
+  setTimeout(() => {
+    welcomeOverlay.style.opacity = '0';
+    setTimeout(() => {
+      welcomeOverlay.style.display = 'none';
+    }, 1000);
+  }, 3000);
+
   loadChatHistory();
+  loadUserData();
+  checkLoginStatus();
   startNewChat();
   initializeSidebarState();
-  document.getElementById('mobileToggle').addEventListener('click', toggleSidebar);
+  initializeTheme();
+  
+  // Attach toggle events
+  mobileToggle.addEventListener('click', toggleSidebar);
+  sidebarToggle.addEventListener('click', toggleSidebar); // Also allow close button to toggle
 });
 
 function initializeSidebarState() {
+  // Default to collapsed on smaller screens, open on larger screens
   if (window.innerWidth <= 768) {
     sidebar.classList.add('collapsed');
   } else {
@@ -60,6 +94,54 @@ function saveChatHistory() {
   }
 }
 
+function loadUserData() {
+    try {
+        const stored = localStorage.getItem('vera_user_data');
+        userData = stored ? JSON.parse(stored) : {};
+        const loggedInUser = localStorage.getItem('vera_current_user');
+        if (loggedInUser) {
+            currentUser = loggedInUser;
+        }
+    } catch(e) {
+        console.error('Error loading user data:', e);
+        userData = {};
+        currentUser = null;
+    }
+}
+
+function saveUserData() {
+    try {
+        localStorage.setItem('vera_user_data', JSON.stringify(userData));
+        if (currentUser) {
+            localStorage.setItem('vera_current_user', currentUser);
+        } else {
+            localStorage.removeItem('vera_current_user');
+        }
+        console.log('User data saved.');
+    } catch (e) {
+        console.error('Error saving user data:', e);
+    }
+}
+
+function checkLoginStatus() {
+    if (currentUser) {
+        loginBtn.style.display = 'none';
+        logoutSection.style.display = 'block';
+        const welcomeTitle = document.querySelector('.welcome-title');
+        if(welcomeTitle) {
+           welcomeTitle.textContent = `Hello, ${currentUser}! How can I help?`;
+        }
+    } else {
+        loginBtn.style.display = 'block';
+        logoutSection.style.display = 'none';
+        const welcomeTitle = document.querySelector('.welcome-title');
+        if(welcomeTitle) {
+           welcomeTitle.textContent = 'How can I help you today?';
+        }
+    }
+}
+
+
 function startNewChat() {
   currentChatId = Date.now().toString();
   const newChat = {
@@ -73,6 +155,7 @@ function startNewChat() {
   clearChat();
   renderChatHistory();
   setActiveChatInHistory(currentChatId);
+  checkLoginStatus(); // Re-apply username to welcome message
 }
 
 function clearChat() {
@@ -119,6 +202,7 @@ function loadChat(chatId) {
 
   setActiveChatInHistory(chatId);
   closeSidebar();
+  checkLoginStatus(); // Re-apply username to welcome message
 }
 
 function saveMessage(text, sender) {
@@ -145,7 +229,7 @@ function saveMessage(text, sender) {
 function renderChatHistory() {
   const filteredChats = chatData.filter(chat => {
     const searchTerm = searchChats.value.toLowerCase();
-    return searchTerm === '' || 
+    return searchTerm === '' ||
            chat.title.toLowerCase().includes(searchTerm) ||
            chat.messages.some(msg => msg.text.toLowerCase().includes(searchTerm));
   });
@@ -203,10 +287,10 @@ function setActiveChatInHistory(chatId) {
 
 function deleteChat(chatId) {
   chatData = chatData.filter(chat => chat.id !== chatId);
+  saveChatHistory();
   if (currentChatId === chatId) {
     startNewChat();
   } else {
-    saveChatHistory();
     renderChatHistory();
   }
 }
@@ -217,9 +301,8 @@ function clearAllHistory() {
     'Are you sure you want to delete all chat history? This action cannot be undone.',
     () => {
       chatData = [];
-      startNewChat();
       saveChatHistory();
-      renderChatHistory();
+      startNewChat();
     }
   );
 }
@@ -238,8 +321,10 @@ function hideConfirmDialog() {
 
 function toggleSidebar() {
   sidebar.classList.toggle('collapsed');
-  if (window.innerWidth <= 768) {
-    sidebarOverlay.classList.toggle('active');
+  if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) {
+      sidebarOverlay.classList.add('active');
+  } else {
+      sidebarOverlay.classList.remove('active');
   }
 }
 
@@ -266,11 +351,11 @@ function addMessage(text, sender, save = true) {
 
   const avatar = document.createElement('div');
   avatar.className = `message-avatar ${sender}-avatar`;
-  avatar.textContent = sender === 'user' ? 'U' : 'V';
+  avatar.textContent = sender === 'user' ? (currentUser ? currentUser.charAt(0).toUpperCase() : 'U') : 'V';
 
   const content = document.createElement('div');
   content.className = 'message-content';
-  content.textContent = text;
+  content.innerHTML = text; // Use innerHTML to render formatted text
 
   messageDiv.appendChild(avatar);
   messageDiv.appendChild(content);
@@ -285,86 +370,217 @@ function addMessage(text, sender, save = true) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
   if (save) {
-    saveMessage(text, sender);
+    const savedText = content.textContent || text; // Save plain text version
+    saveMessage(savedText, sender);
   }
 }
 
+function speak(text, onEndCallback) {
+    if (synth.speaking) {
+        synth.cancel();
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.onstart = () => {
+        isSpeaking = true;
+        micButton.classList.add('speaking');
+        micIcon.style.display = 'none';
+        stopIcon.style.display = 'block';
+        micButton.title = 'V.E.R.A is speaking... Click to stop';
+    };
+
+    utterance.onend = () => {
+        isSpeaking = false;
+        micButton.classList.remove('speaking');
+        micIcon.style.display = 'block';
+        stopIcon.style.display = 'none';
+        micButton.title = 'Voice input';
+        if (onEndCallback) {
+            onEndCallback();
+        }
+    };
+
+    utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error);
+        isSpeaking = false;
+        micButton.classList.remove('recording');
+        micIcon.style.display = 'block';
+        stopIcon.style.display = 'none';
+        micButton.title = 'Voice input';
+    };
+    synth.speak(utterance);
+}
+
+// Function to prompt user for YouTube download format
+function promptForDownloadFormat(url) {
+    youtubeLinkToDownload = url; // Store the URL globally
+    const messageContent = `
+        <p>I detected a YouTube link! What format would you like to download it as?</p>
+        <div class="flex space-x-2 mt-2">
+            <button class="download-option-btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200" data-format="mp3">Download MP3</button>
+            <button class="download-option-btn bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200" data-format="mp4">Download MP4</button>
+        </div>
+    `;
+    addMessage(messageContent, 'bot');
+    speak("I detected a YouTube link! What format would you like to download it as?");
+}
+
+// Function to simulate YouTube download
+function simulateYouTubeDownload(format) {
+    if (!youtubeLinkToDownload) {
+        addMessage("No YouTube link found to download.", 'bot');
+        speak("No YouTube link found to download.");
+        return;
+    }
+
+    // Add a message indicating download in progress
+    addMessage(`<i>Attempting to download ${format.toUpperCase()} from YouTube...</i>`, 'bot', false);
+    speak(`Attempting to download ${format.toUpperCase()} from YouTube.`, () => {
+        // Simulate download delay
+        setTimeout(() => {
+            const isSuccess = Math.random() > 0.3; // 70% chance of success
+            let statusText = '';
+            let statusColor = '';
+
+            if (isSuccess) {
+                statusText = `✅ Download of ${format.toUpperCase()} complete! (Simulation)`;
+                statusColor = 'text-green-600';
+                
+                // Trigger a dummy file download
+                // This is a placeholder as direct YouTube download is not possible from client-side JS.
+                const dummyContent = `This is a simulated download for the YouTube link: ${youtubeLinkToDownload}\nFormat: ${format.toUpperCase()}\n\nA real YouTube downloader requires a backend server.`;
+                const blob = new Blob([dummyContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `youtube_download_simulation.${format === 'mp3' ? 'txt' : 'txt'}`; // Still using .txt for dummy file
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url); // Clean up the URL object
+
+                speak(`Download of ${format.toUpperCase()} complete! A dummy file has been downloaded.`);
+            } else {
+                statusText = `❌ Download of ${format.toUpperCase()} failed. (Simulation - requires backend)`;
+                statusColor = 'text-red-600';
+                speak(`Download of ${format.toUpperCase()} failed.`);
+            }
+
+            // Update the last message or add a new one with the status
+            const statusMessageContent = `<span class="${statusColor}">${statusText}</span>`;
+            addMessage(statusMessageContent, 'bot');
+            youtubeLinkToDownload = null; // Clear the stored URL
+        }, 3000); // Simulate a 3-second download
+    });
+}
+
+
 async function processQuery(query) {
   addMessage(query, 'user');
+  
+  const lowerQuery = query.toLowerCase().trim();
+  let response = '';
+  
+  // Regex to detect YouTube URLs
+  const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
+  const youtubeMatch = query.match(youtubeRegex);
 
-  const lowerQuery = query.toLowerCase();
-  const synth = window.speechSynthesis;
-
-  // Handle time queries
-  if (lowerQuery.includes("time")) {
-    const time = new Date().toLocaleTimeString();
-    const response = `Current time is ${time}`;
-    addMessage(response, 'bot');
-    synth.speak(new SpeechSynthesisUtterance(response));
+  if (youtubeMatch) {
+    promptForDownloadFormat(youtubeMatch[0]); // Pass the full matched URL
     return;
   }
 
-  // Handle date queries
-  if (lowerQuery.includes("date")) {
-    const date = new Date().toLocaleDateString();
-    const response = `Today's date is ${date}`;
+
+  // --- Direct Commands & Simple Q&A ---
+  if (['hello', 'hi', 'hey'].includes(lowerQuery)) {
+    response = currentUser ? `Hello, ${currentUser}! How can I assist you?` : "Hello! How can I assist you today?";
     addMessage(response, 'bot');
-    synth.speak(new SpeechSynthesisUtterance(response));
+    speak(response);
     return;
   }
-
-  // Handle math calculations
-  const mathPattern = /^[\d+\-*/ ().]+$/;
-  if (mathPattern.test(query.replace(/\s/g, ''))) {
-    try {
-      const result = Function('"use strict"; return (' + query + ')')();
-      const response = `The answer is ${result}`;
+  
+  if (lowerQuery.includes('how are you')) {
+      response = "I'm a machine, but I'm operating at full capacity! Thanks for asking. What can I do for you?";
       addMessage(response, 'bot');
-      synth.speak(new SpeechSynthesisUtterance(response));
+      speak(response);
       return;
-    } catch {
-      const errorMsg = "Sorry, I couldn't calculate that.";
-      addMessage(errorMsg, 'bot');
-      synth.speak(new SpeechSynthesisUtterance(errorMsg));
-      return;
-    }
   }
 
-  // Handle website opening functionality
+  if (lowerQuery.includes("time")) {
+    const now = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeZone = now.toLocaleDateString(undefined, {day:'2-digit',timeZoneName: 'long' }).substring(4);
+    response = `The current time is <strong>${time}</strong> (${timeZone}).`;
+    addMessage(response, 'bot');
+    speak(`The current time is ${time}.`);
+    return;
+  }
+
+  if (lowerQuery.includes("date")) {
+    const now = new Date();
+    const date = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    response = `Today's date is <strong>${date}</strong>.`;
+    addMessage(response, 'bot');
+    speak(`Today's date is ${date}.`);
+    return;
+  }
+
+  // --- Math Calculation ---
+  const mathRegex = /^(what is|what's|calculate|compute)?\s*(-?[\d\.]+\s*[\+\-\*\/]\s*)+-?[\d\.]+$/;
+  if(mathRegex.test(lowerQuery)) {
+      try {
+          const mathQuery = lowerQuery.replace(/what is|what's|calculate|compute/g, '').trim();
+          const result = new Function(`'use strict'; return (${mathQuery})`)();
+          if (typeof result === 'number' && isFinite(result)) {
+            response = `The result of <code>${mathQuery}</code> is <strong>${result}</strong>.`;
+            addMessage(response, 'bot');
+            speak(`The answer is ${result}`);
+            return;
+          }
+      } catch (e) {
+          console.error("Math calculation error:", e);
+      }
+  }
+
+  // --- Website Opening ---
   const commonSites = {
-    youtube: "https://www.youtube.com",
+    youtube: "https://www.youtube.com", // This will now be handled by the youtubeRegex above
     duckduckgo: "https://duckduckgo.com",
     firefox: "https://firefox.com",
     google: "https://www.google.com",
     wikipedia: "https://www.wikipedia.org",
     github: "https://www.github.com",
-    vera: "https://vera.ai"
   };
 
   const domainMatch = lowerQuery.match(/open\s+([a-z0-9.-]+\.[a-z]{2,})/i);
   if (domainMatch) {
     const url = domainMatch[1].startsWith('http') ? domainMatch[1] : 'https://' + domainMatch[1];
     window.open(url, '_blank');
-    const response = `Opening ${domainMatch[1]}...`;
+    response = `Opening ${domainMatch[1]}...`;
     addMessage(response, 'bot');
-    synth.speak(new SpeechSynthesisUtterance(response));
+    speak(response);
     return;
   }
 
   for (const keyword in commonSites) {
     if (lowerQuery.includes('open') && lowerQuery.includes(keyword)) {
       window.open(commonSites[keyword], '_blank');
-      const response = `Opening ${keyword.charAt(0).toUpperCase() + keyword.slice(1)}...`;
+      response = `Opening ${keyword.charAt(0).toUpperCase() + keyword.slice(1)}...`;
       addMessage(response, 'bot');
-      synth.speak(new SpeechSynthesisUtterance(response));
+      speak(response);
       return;
     }
   }
 
-  // Show searching message
-  synth.speak(new SpeechSynthesisUtterance(`Searching for ${query}`));
+  // --- General Knowledge Search (Fetch data from browse/DuckDuckGo) ---
+  const tempMessage = document.createElement('div');
+  tempMessage.className = 'message bot-message';
+  tempMessage.innerHTML = `<div class="message-avatar bot-avatar">V</div><div class="message-content"><i>Searching for an answer...</i></div>`;
+  chatMessages.appendChild(tempMessage);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 
-  // Try to search for information
+  speak(`Searching for ${query}`);
+
   try {
     const proxy = 'https://api.allorigins.win/get?url=';
     const duckUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
@@ -376,6 +592,8 @@ async function processQuery(query) {
     const doc = parser.parseFromString(html, 'text/html');
     const snippet = doc.querySelector('.result__snippet');
 
+    chatMessages.removeChild(tempMessage); // Remove the "Searching..." message
+
     let answer = snippet ? snippet.textContent.trim() : "Sorry, I couldn't find a clear answer to your question.";
     
     // Limit answer length
@@ -384,72 +602,15 @@ async function processQuery(query) {
     }
     
     addMessage(answer, 'bot');
-    synth.speak(new SpeechSynthesisUtterance(answer));
+    speak(answer);
+
   } catch (e) {
     console.error('Search error:', e);
+    chatMessages.removeChild(tempMessage);
     const fallback = "Sorry, I couldn't fetch the answer right now. Please try again later.";
     addMessage(fallback, 'bot');
-    synth.speak(new SpeechSynthesisUtterance(fallback));
+    speak(fallback);
   }
-}
-
-function generateResponse(query) {
-  const lowerQuery = query.toLowerCase();
-  const commonSites = {
-    youtube: "https://www.youtube.com",
-    duckduckgo:"https://duckduckgo.com",
-    Firefox:"https://Firefox.com",
-    google: "https://www.google.com",
-    wikipedia: "https://www.wikipedia.org",
-    github: "https://www.github.com",
-    vera: "https://vera.ai"
-  };
-
-  const domainMatch = lowerQuery.match(/open\s+([a-z0-9.-]+\.[a-z]{2,})/i);
-  if (domainMatch) {
-    const url = domainMatch[1].startsWith('http') ? domainMatch[1] : 'https://' + domainMatch[1];
-    window.open(url, '_blank');
-    return `Opening ${domainMatch[1]}...`;
-  }
-
-  for (const keyword in commonSites) {
-    if (lowerQuery.includes('open') && lowerQuery.includes(keyword)) {
-      window.open(commonSites[keyword], '_blank');
-      return `Opening ${keyword.charAt(0).toUpperCase() + keyword.slice(1)}...`;
-    }
-  }
-
-  if (lowerQuery.includes('time')) {
-    return `The current time is ${new Date().toLocaleTimeString()}.`;
-  }
-
-  const mathMatch = query.match(/(\d+)\s*[\+\-\*\/]\s*(\d+)/);
-  if (mathMatch) {
-    try {
-      const result = eval(query.replace(/[^0-9+\-*/().\s]/g, ''));
-      return `The answer is ${result}.`;
-    } catch (e) {
-      return "I couldn't calculate that. Please check your math expression.";
-    }
-  }
-
-  if (lowerQuery.includes('weather')) {
-    return "I don't have access to real-time weather data, but I'd recommend checking a weather service.";
-  }
-
-  if (lowerQuery.includes('artificial intelligence') || lowerQuery.includes('ai')) {
-    return "Artificial Intelligence (AI) simulates human intelligence in machines to perform tasks.";
-  }
-
-  const responses = [
-    "Could you provide more specific details?",
-    "That's interesting! What do you want to know?",
-    "Can you rephrase or give more context?",
-    "I'm here to help! Please clarify your question.",
-    "I'm V.E.R.A, your assistant. Let's explore that topic."
-  ];
-
-  return responses[Math.floor(Math.random() * responses.length)];
 }
 
 function fillPrompt(text) {
@@ -470,6 +631,8 @@ function initializeSpeechRecognition() {
     recognition.onstart = function() {
       isRecording = true;
       micButton.classList.add('recording');
+      micIcon.style.display = 'none';
+      stopIcon.style.display = 'block';
       micButton.title = 'Recording... Click to stop';
     };
 
@@ -483,6 +646,8 @@ function initializeSpeechRecognition() {
     recognition.onend = function() {
       isRecording = false;
       micButton.classList.remove('recording');
+      micIcon.style.display = 'block';
+      stopIcon.style.display = 'none';
       micButton.title = 'Voice input';
     };
 
@@ -490,6 +655,8 @@ function initializeSpeechRecognition() {
       console.error('Speech recognition error:', event.error);
       isRecording = false;
       micButton.classList.remove('recording');
+      micIcon.style.display = 'block';
+      stopIcon.style.display = 'none';
       micButton.title = 'Voice input';
     };
   } else {
@@ -497,6 +664,36 @@ function initializeSpeechRecognition() {
   }
 }
 
+// --- Theme Toggle ---
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('vera_theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        themeIcon.textContent = '☀️'; // Corrected icon for light mode
+        themeText.textContent = 'Dark Mode';
+    } else {
+        document.body.classList.remove('light-mode');
+        themeIcon.textContent = '🌞';
+        themeText.textContent = 'Light Mode';
+    }
+}
+
+themeToggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    let theme = 'dark';
+    if (document.body.classList.contains('light-mode')) {
+        theme = 'light';
+        themeIcon.textContent = '🌜';
+        themeText.textContent = 'Dark Mode';
+    } else {
+        themeIcon.textContent = '🌞';
+        themeText.textContent = 'Light Mode';
+    }
+    localStorage.setItem('vera_theme', theme);
+});
+
+
+// --- Event Listeners ---
 form.addEventListener('submit', function(e) {
   e.preventDefault();
   const query = queryInput.value.trim();
@@ -523,19 +720,25 @@ queryInput.addEventListener('keydown', function(e) {
 });
 
 micButton.addEventListener('click', function() {
+  if (isSpeaking) {
+    synth.cancel();
+    return;
+  }
+  
+  if (isRecording) {
+    recognition.stop();
+    return;
+  }
+  
   if (!recognition) {
-    alert('Speech recognition is not supported in your browser.');
+    addMessage('Speech recognition is not supported in your browser.', 'bot');
     return;
   }
 
-  if (isRecording) {
-    recognition.stop();
-  } else {
-    recognition.start();
-  }
+  recognition.start();
 });
 
-sidebarToggle.addEventListener('click', toggleSidebar);
+
 sidebarOverlay.addEventListener('click', closeSidebar);
 newChatBtn.addEventListener('click', startNewChat);
 searchChats.addEventListener('input', renderChatHistory);
@@ -554,14 +757,59 @@ confirmDialog.addEventListener('click', function(e) {
   }
 });
 
-window.addEventListener('resize', function() {
-  if (window.innerWidth > 768) {
-    sidebar.classList.remove('collapsed');
-    sidebarOverlay.classList.remove('active');
-  } else {
-    sidebar.classList.add('collapsed');
-    sidebarOverlay.classList.remove('active');
-  }
+// Event listener for dynamically added download buttons
+chatMessages.addEventListener('click', function(e) {
+    if (e.target.classList.contains('download-option-btn')) {
+        const format = e.target.dataset.format;
+        simulateYouTubeDownload(format);
+    }
+});
+
+
+loginBtn.addEventListener('click', () => {
+    loginModal.style.display = 'block';
+});
+
+logoutBtn.addEventListener('click', () => {
+    currentUser = null;
+    saveUserData();
+    checkLoginStatus();
+    addMessage("You have been logged out.", 'bot');
+});
+
+
+closeLoginModal.addEventListener('click', () => {
+    loginModal.style.display = 'none';
+});
+
+window.addEventListener('click', (event) => {
+    if (event.target == loginModal) {
+        loginModal.style.display = 'none';
+    }
+});
+
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    if(userData[username] && userData[username].password === password) {
+        // Login successful
+    } else if (userData[username]) {
+        addMessage('Incorrect password!', 'bot');
+        return;
+    } else {
+        // New user registration
+        userData[username] = { password: password };
+    }
+    currentUser = username;
+    saveUserData();
+    checkLoginStatus();
+
+    loginModal.style.display = 'none';
+    loginForm.reset();
+    addMessage(`Welcome, ${currentUser}!`, 'bot');
+
 });
 
 initializeSpeechRecognition();
@@ -572,18 +820,10 @@ document.addEventListener('keydown', function(e) {
       hideConfirmDialog();
     } else if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) {
       closeSidebar();
+    } else if (loginModal.style.display === 'block') {
+        loginModal.style.display = 'none';
     }
   }
 });
 
 queryInput.focus();
-
-function speakResponse(text) {
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
-  } else {
-    console.warn("Speech synthesis not supported in this browser.");
-  }
-}
