@@ -9,14 +9,24 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="welcome-overlay" id="welcomeOverlay">
+    <div class="welcome-content">
+      <img src="veraicon.jpg" alt="Vera Icon" class="welcome-icon">
+      <h1>Welcome to V.E.R.A</h1>
+    </div>
+  </div>
+
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
-  
+
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h2 class="sidebar-title">V.E.R.A</h2>
+      <div class="sidebar-title">
+        <img src="veraicon.jpg" alt="Vera Icon" class="sidebar-icon">
+        <h2>V.E.R.A</h2>
+      </div>
       <button class="sidebar-toggle" id="sidebarToggle">×</button>
     </div>
-    
+
     <div class="sidebar-content">
       <div class="sidebar-section">
         <div class="sidebar-section-title">Actions</div>
@@ -24,13 +34,26 @@
           <span>💬</span>
           New Chat
         </button>
+         <button class="sidebar-button" id="loginBtn">
+          <span>🔒</span>
+          Login
+        </button>
       </div>
-      
+
+       <div class="sidebar-section">
+        <div class="sidebar-section-title">Settings</div>
+        <button class="sidebar-button" id="themeToggleBtn">
+          <span id="theme-icon">🌞</span>
+          <span id="theme-text">Light Mode</span>
+        </button>
+      </div>
+
+
       <div class="sidebar-section">
         <div class="sidebar-section-title">Search Chats</div>
         <input type="text" class="search-box" id="searchChats" placeholder="Search your chats...">
       </div>
-      
+
       <div class="sidebar-section">
         <div class="sidebar-section-title">Chat History</div>
         <div class="chat-history" id="chatHistory">
@@ -42,6 +65,12 @@
             Clear All History
           </button>
         </div>
+      </div>
+       <div class="sidebar-section" id="logoutSection" style="display: none;">
+        <button class="sidebar-button" id="logoutBtn">
+          <span>🔓</span>
+          Logout
+        </button>
       </div>
     </div>
   </div>
@@ -57,7 +86,7 @@
         <div class="welcome-section" id="welcomeSection">
           <h2 class="welcome-title">How can I help you today?</h2>
           <p class="welcome-subtitle">Ask me anything - I can help with calculations, provide information, or just have a conversation.</p>
-          
+
           <div class="example-prompts">
             <div class="example-prompt" onclick="fillPrompt('What time is it?')">
               <div class="example-prompt-title">Current Time</div>
@@ -82,15 +111,25 @@
       <div class="input-section">
         <div class="input-container">
           <form id="searchForm" class="input-wrapper">
-            <textarea 
-              id="queryInput" 
-              class="chat-input" 
+            <textarea
+              id="queryInput"
+              class="chat-input"
               placeholder="Message V.E.R.A..."
               rows="1"
               required
             ></textarea>
             <div class="input-actions">
-              <button type="button" id="micButton" class="mic-button" title="Voice input">🎤</button>
+                <button type="button" id="micButton" class="mic-button" title="Voice input">
+                    <svg id="micIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mic">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <svg id="stopIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display: none;" class="feather feather-stop-circle">
+                        <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                </button>
               <button type="submit" id="sendButton" class="send-button" title="Send message">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -115,7 +154,22 @@
     </div>
   </div>
 
+  <!-- Login Modal -->
+  <div class="modal" id="loginModal">
+      <div class="modal-content">
+          <span class="close-button" id="closeLoginModal">&times;</span>
+          <h2>Login</h2>
+          <form id="loginForm">
+              <input type="text" id="username" placeholder="Username" required>
+              <input type="password" id="password" placeholder="Password" required>
+              <button type="submit">Submit</button>
+              <a href="#" class="forgot-password">Forgot Password?</a>
+          </form>
+      </div>
+  </div>
+
+
   <script src="script.js"></script>
-   
+
 </body>
 </html>
