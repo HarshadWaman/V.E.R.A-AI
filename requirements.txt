@@ -1,0 +1,15 @@
+tkinter
+pyttsx3
+speech_recognition
+requests
+beautifulsoup4
+pywin32
+psutil
+python-docx
+pdfplumber
+pdf2docx
+python-pptx
+pillow
+ollama
+yt-dlp
+opencv-python
