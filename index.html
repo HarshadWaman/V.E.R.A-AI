@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>V.E.R.A</title>
+  <!-- Favicon link -->
+  <link rel="icon" type="image/png" href="veraicon.jpg">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="welcome-overlay" id="welcomeOverlay">
+    <div class="welcome-content">
+      <img src="veraicon.jpg" alt="Vera Icon" class="welcome-icon">
+      <h1>Welcome to V.E.R.A</h1>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <img src="veraicon.jpg" alt="Vera Icon" class="sidebar-icon">
+        <h2>V.E.R.A</h2>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle">×</button>
+    </div>
+
+    <div class="sidebar-content">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Actions</div>
+        <button class="sidebar-button" id="newChatBtn">
+          <span>💬</span>
+          New Chat
+        </button>
+        <button class="sidebar-button" id="loginBtn">
+          <span>🔒</span>
+          Login
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Settings</div>
+        <button class="sidebar-button" id="themeToggleBtn">
+          <span id="theme-icon">🌞</span>
+          <span id="theme-text">Light Mode</span>
+        </button>
+      </div>
+
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Search Chats</div>
+        <input type="text" class="search-box" id="searchChats" placeholder="Search your chats...">
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Chat History</div>
+        <div class="chat-history" id="chatHistory">
+          <!-- Chat history items will be populated here -->
+        </div>
+        <div class="clear-history-section">
+          <button class="clear-history-btn" id="clearHistoryBtn">
+            <span>🗑️</span>
+            Clear All History
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-section" id="logoutSection" style="display: none;">
+        <button class="sidebar-button" id="logoutBtn">
+          <span>🔓</span>
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="header">
+      <button class="mobile-toggle" id="mobileToggle">☰</button>
+      <h1>V.E.R.A</h1>
+      <button class="desktop-download-btn" id="desktopDownloadBtn" title="Download Desktop Version">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="chat-container">
+      <div class="chat-messages" id="chatMessages">
+        <div class="welcome-section" id="welcomeSection">
+          <h2 class="welcome-title">How can I help you today?</h2>
+          <p class="welcome-subtitle">Ask me anything - I can help with calculations, provide information, or just have
+            a conversation.</p>
+
+          <div class="example-prompts">
+            <div class="example-prompt" onclick="fillPrompt('What time is it?')">
+              <div class="example-prompt-title">Current Time</div>
+              <div class="example-prompt-subtitle">Get the current time</div>
+            </div>
+            <div class="example-prompt" onclick="fillPrompt('What is 25 * 17?')">
+              <div class="example-prompt-title">Calculator</div>
+              <div class="example-prompt-subtitle">Solve math problems</div>
+            </div>
+            <div class="example-prompt" onclick="fillPrompt('What is the weather like?')">
+              <div class="example-prompt-title">Weather</div>
+              <div class="example-prompt-subtitle">Search for weather information</div>
+            </div>
+            <div class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
+              <div class="example-prompt-title">Learn</div>
+              <div class="example-prompt-subtitle">Get information on any topic</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-section">
+        <div class="input-container">
+          <form id="searchForm" class="input-wrapper">
+            <textarea id="queryInput" class="chat-input" placeholder="Message V.E.R.A..." rows="1" required></textarea>
+            <div class="input-actions">
+              <button type="button" id="micButton" class="mic-button" title="Voice input">
+                <svg id="micIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="feather feather-mic">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+                <svg id="stopIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                  fill="currentColor" stroke="none" style="display: none;" class="feather feather-stop-circle">
+                  <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+              </button>
+              <button type="submit" id="sendButton" class="send-button" title="Send message">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div class="confirm-dialog" id="confirmDialog">
+    <div class="confirm-content">
+      <h3 class="confirm-title" id="confirmTitle">Confirm Action</h3>
+      <p class="confirm-message" id="confirmMessage">Are you sure you want to proceed?</p>
+      <div class="confirm-actions">
+        <button class="confirm-btn cancel" id="confirmCancel">Cancel</button>
+        <button class="confirm-btn delete" id="confirmDelete">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <span class="close-button" id="closeLoginModal">&times;</span>
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Submit</button>
+        <a href="#" class="forgot-password">Forgot Password?</a>
+      </form>
+    </div>
+  </div>
+
+  <!-- Download Modal -->
+  <div class="modal" id="downloadModal">
+    <div class="download-modal-content">
+      <span class="close-button" id="closeDownloadModal">&times;</span>
+      <div class="download-header">
+        <h2>Download V.E.R.A</h2>
+        <p>Free and ready to assist you on your desktop.</p>
+      </div>
+      <div class="download-platforms">
+        <div class="platform">
+          <img src="https://img.icons8.com/color/96/000000/windows-10.png" alt="Windows Logo" class="platform-logo">
+          <!-- Updated href to a Google Drive link for Windows -->
+          <a href="https://drive.usercontent.google.com/download?id=1JQC6nqmfKNA0NKYzovMAVVDWgViryQLT&export=download&authuser=0"
+            class="download-button" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Windows
+          </a>
+          <span class="platform-version">Windows 10, 11</span>
+        </div>
+        <div class="platform">
+          <img src="https://img.icons8.com/color/96/000000/linux.png" alt="Linux Logo" class="platform-logo">
+          <!-- Updated href to a Google Drive link for Linux -->
+          <a href="YOUR_LINUX_GOOGLE_DRIVE_LINK" class="download-button" target="_blank" id="linuxDownloadBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Linux
+          </a>
+          <span class="platform-version">Debian, Ubuntu</span>
+        </div>
+        <div class="platform">
+          <img src="https://img.icons8.com/color/96/000000/mac-os.png" alt="macOS Logo" class="platform-logo">
+          <!-- Updated href to a Google Drive link for Mac OS -->
+          <a href="YOUR_MACOS_GOOGLE_DRIVE_LINK" class="download-button" target="_blank" id="macDownloadBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Mac OS
+          </a>
+          <span class="platform-version">macOS 11.0+</span>
+        </div>
+      </div>
+      <p id="downloadMessage" class="download-message"></p>
+    </div>
+  </div>
+
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>
