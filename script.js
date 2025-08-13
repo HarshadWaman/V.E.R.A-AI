@@ -1,4 +1,3 @@
-
 const form = document.getElementById('searchForm');
 const queryInput = document.getElementById('queryInput');
 const chatMessages = document.getElementById('chatMessages');
@@ -36,6 +35,7 @@ const closeDownloadModal = document.getElementById('closeDownloadModal');
 const linuxDownloadBtn = document.getElementById('linuxDownloadBtn');
 const macDownloadBtn = document.getElementById('macDownloadBtn');
 const downloadMessage = document.getElementById('downloadMessage');
+const ollamaDownloadBtn = document.getElementById('ollamaDownloadBtn'); // New: Ollama Download Button
 
 
 let recognition;
@@ -815,6 +815,25 @@ linuxDownloadBtn.addEventListener('click', (e) => {
 macDownloadBtn.addEventListener('click', (e) => {
     e.preventDefault(); // Prevent following the href="#"
     showComingSoonMessage();
+});
+
+// New: Ollama Download Button Listener
+ollamaDownloadBtn.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent default link behavior
+
+    const ollamaInstructions = `
+        <h3 style="font-size: 1.2rem; margin-bottom: 15px;">How to install Ollama and Llama 3.2:</h3>
+        <p style="font-size: 1rem; margin-bottom: 10px;">1. <b>Download Ollama:</b> Visit <a href="https://ollama.com/download" target="_blank" class="text-blue-400 hover:underline">ollama.com/download</a> and download the installer for your operating system.</p>
+        <p style="font-size: 1rem; margin-bottom: 10px;">2. <b>Install Ollama:</b> Run the downloaded installer and follow the on-screen instructions.</p>
+        <p style="font-size: 1rem; margin-bottom: 10px;">3. <b>Open your Terminal/Command Prompt:</b> After installation, open your terminal (macOS/Linux) or Command Prompt/PowerShell (Windows).</p>
+        <p style="font-size: 1rem; margin-bottom: 10px;">4. <b>Download Llama 3.2:</b> In the terminal, run the command: <code style="background-color: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-family: monospace; font-size: 0.95rem; display: inline-block; margin-top: 5px;">ollama run llama3.2</code></p>
+        <p style="font-size: 1rem; margin-bottom: 10px;">This command will download the Llama 3.2 model. Once downloaded, it will start running, and you can interact with it directly in your terminal.</p>
+        <p style="font-size: 1rem;">For more detailed instructions and advanced usage, refer to the <a href="https://ollama.com/blog/llama3" target="_blank" class="text-blue-400 hover:underline">Ollama Llama 3 blog post</a>.</p>
+    `;
+    
+    downloadMessage.innerHTML = ollamaInstructions;
+    downloadMessage.style.display = 'block';
+    downloadModal.scrollTop = 0; // Scroll to top to ensure instructions are visible
 });
 
 
