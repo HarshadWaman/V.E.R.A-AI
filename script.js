@@ -35,7 +35,7 @@ const closeDownloadModal = document.getElementById('closeDownloadModal');
 const linuxDownloadBtn = document.getElementById('linuxDownloadBtn');
 const macDownloadBtn = document.getElementById('macDownloadBtn');
 const downloadMessage = document.getElementById('downloadMessage');
-const ollamaDownloadBtn = document.getElementById('ollamaDownloadBtn'); // New: Ollama Download Button
+const ollamaDownloadBtn = document.getElementById('ollamaDownloadBtn');
 
 
 let recognition;
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     welcomeOverlay.style.opacity = '0';
     setTimeout(() => {
       welcomeOverlay.style.display = 'none';
-    }, 1000);
+    }, 3000);
   }, 3000);
 
   loadChatHistory();
