@@ -5,7 +5,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>V.E.R.A</title>
-  <!-- Favicon link -->
   <link rel="icon" type="image/png" href="veraicon.jpg">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -59,8 +58,7 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">Chat History</div>
         <div class="chat-history" id="chatHistory">
-          <!-- Chat history items will be populated here -->
-        </div>
+          </div>
         <div class="clear-history-section">
           <button class="clear-history-btn" id="clearHistoryBtn">
             <span>🗑️</span>
@@ -150,7 +148,6 @@
     </div>
   </div>
 
-  <!-- Confirmation Dialog -->
   <div class="confirm-dialog" id="confirmDialog">
     <div class="confirm-content">
       <h3 class="confirm-title" id="confirmTitle">Confirm Action</h3>
@@ -162,7 +159,6 @@
     </div>
   </div>
 
-  <!-- Login Modal -->
   <div class="modal" id="loginModal">
     <div class="modal-content">
       <span class="close-button" id="closeLoginModal">&times;</span>
@@ -176,7 +172,6 @@
     </div>
   </div>
 
-  <!-- Download Modal -->
   <div class="modal" id="downloadModal">
     <div class="download-modal-content">
       <span class="close-button" id="closeDownloadModal">&times;</span>
@@ -187,7 +182,6 @@
       <div class="download-platforms">
         <div class="platform">
           <img src="https://img.icons8.com/color/96/000000/windows-10.png" alt="Windows Logo" class="platform-logo">
-          <!-- Updated href to a Google Drive link for Windows -->
           <a href="https://drive.usercontent.google.com/download?id=1RMGQ1qZ6GTgM9_lxwpvjhxqO45qVejJP&export=download&authuser=0"
             class="download-button" target="_blank">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -202,7 +196,6 @@
         </div>
         <div class="platform">
           <img src="https://img.icons8.com/color/96/000000/linux.png" alt="Linux Logo" class="platform-logo">
-          <!-- Updated href to a Google Drive link for Linux -->
           <a href="YOUR_LINUX_GOOGLE_DRIVE_LINK" class="download-button" target="_blank" id="linuxDownloadBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -216,7 +209,6 @@
         </div>
         <div class="platform">
           <img src="https://img.icons8.com/color/96/000000/mac-os.png" alt="macOS Logo" class="platform-logo">
-          <!-- Updated href to a Google Drive link for Mac OS -->
           <a href="YOUR_MACOS_GOOGLE_DRIVE_LINK" class="download-button" target="_blank" id="macDownloadBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -228,7 +220,6 @@
           </a>
           <span class="platform-version">macOS 11.0+</span>
         </div>
-        <!-- New Download Database Option -->
         <div class="platform">
           <img src="https://img.icons8.com/ios-filled/96/000000/database.png" alt="Database Logo" class="platform-logo">
           <a href="https://ollama.com/download" class="download-button" target="_blank" id="ollamaDownloadBtn">
@@ -243,10 +234,44 @@
           <span class="platform-version">Ollama Llama 3.2</span>
         </div>
       </div>
+      
+      <div class="system-requirements">
+        <h3>System Requirements</h3>
+        <h4>Operating System</h4>
+        <ul>
+          <li><b>Windows 10/11:</b> Recommended (full feature support)</li>
+          <li><b>macOS 11+:</b> Works but without some Windows-only features (PowerPoint/Word automation, brightness control)</li>
+          <li><b>Linux:</b> Works but with limited file conversion features</li>
+        </ul>
+        <h4>Hardware</h4>
+        <ul>
+          <li><b>Processor:</b> Dual-core 2.0 GHz or higher (Intel i3/Ryzen 3 minimum)</li>
+          <li><b>Memory (RAM):</b> 4 GB minimum, 8 GB+ recommended</li>
+          <li><b>Storage:</b> 500 MB free for Python environment + 2–3 GB free for generated files</li>
+          <li><b>Display:</b> 1280×720 minimum resolution</li>
+          <li><b>Microphone:</b> Required for voice commands</li>
+          <li><b>Speakers/Headphones:</b> Required for speech output</li>
+          <li><b>Webcam:</b> Required for camera and photo capture features</li>
+        </ul>
+        <h4>Software</h4>
+        <ul>
+          <li><b>Python:</b> Version 3.10 or newer (64-bit recommended)</li>
+          <li><b>Microsoft Office (Word & PowerPoint):</b> Required for advanced file conversions and presentations (Windows only)</li>
+          <li><b>Google Chrome / Microsoft Edge:</b> For integrated search commands</li>
+          <li><b>FFmpeg:</b> For yt-dlp video downloads (optional)</li>
+        </ul>
+        <h4>Internet Connection</h4>
+        <p>An active internet connection is required for:</p>
+        <ul>
+          <li>Ollama AI model calls</li>
+          <li>Youtubees and playback</li>
+          <li>Web scraping and API requests</li>
+        </ul>
+      </div>
+
       <p id="downloadMessage" class="download-message"></p>
     </div>
   </div>
-
 
   <script src="script.js"></script>
 
