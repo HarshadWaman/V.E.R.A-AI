@@ -87,14 +87,26 @@ body {
 .welcome-icon {
   width: 150px;
   height: 150px;
-  animation: pulse 2s infinite;
+  animation: welcome-animation 3s infinite ease-in-out;
   margin-bottom: 20px;
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+@keyframes welcome-animation {
+    0% {
+        transform: scale(1) translateY(0);
+        opacity: 0.9;
+        filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.4));
+    }
+    50% {
+        transform: scale(1.08) translateY(-12px);
+        opacity: 1;
+        filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.7));
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 0.9;
+        filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.4));
+    }
 }
 
 /* Modal Styles */
@@ -1177,7 +1189,7 @@ body.light-mode .example-prompt-subtitle {
 .download-modal-content {
     background: var(--download-modal-bg);
     color: var(--text-color);
-    margin: 10% auto;
+    margin: 5% auto;
     padding: 30px;
     border-radius: 15px;
     width: 90%;
@@ -1275,6 +1287,51 @@ body.light-mode .download-message {
     color: #0c4a6e;
 }
 
+/* System Requirements Styles */
+.system-requirements {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--sidebar-border);
+    text-align: left;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.light-mode .system-requirements {
+    color: #444;
+}
+
+.system-requirements h3 {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.system-requirements h4 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--sidebar-border);
+}
+
+.system-requirements ul {
+    list-style-position: inside;
+    padding-left: 10px;
+    margin-bottom: 10px;
+}
+
+.system-requirements li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.system-requirements p {
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
 
 /* Hide welcome section when there are messages */
 .has-messages .welcome-section {
@@ -1313,7 +1370,7 @@ body.light-mode .download-message {
   }
 
   .modal-content, .download-modal-content {
-      margin: 20% auto;
+      margin: 10% auto;
       width: 95%;
   }
 
