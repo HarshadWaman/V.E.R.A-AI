@@ -12,8 +12,25 @@
 <body>
   <div class="welcome-overlay" id="welcomeOverlay">
     <div class="welcome-content">
-      <img src="veraicon.jpg" alt="Vera Icon" class="welcome-icon">
-      <h1>Welcome to V.E.R.A</h1>
+      <div class="welcome-animation-container">
+        <div class="hologram-ring ring-1"></div>
+        <div class="hologram-ring ring-2"></div>
+        <div class="hologram-ring ring-3"></div>
+        <img src="veraicon.jpg" alt="Vera Icon" class="welcome-icon">
+        <div class="particle-container">
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+          <div class="particle"></div>
+        </div>
+      </div>
+      <h1 class="glitch-text" data-text="Welcome to V.E.R.A">Welcome to V.E.R.A</h1>
+      <div class="loading-bar">
+        <div class="loading-progress"></div>
+      </div>
+      <p class="loading-text">Initializing AI Systems...</p>
     </div>
   </div>
 
@@ -35,8 +52,26 @@
           <span>💬</span>
           New Chat
         </button>
+        <button class="sidebar-button" id="guidanceBtn">
+          <span>❓</span>
+          Guidance
+        </button>
+        <button class="sidebar-button" id="feedbackBtn">
+          <span>📝</span>
+          Feedback
+        </button>
+        <!-- NEW: User Profile Button -->
+        <button class="sidebar-button" id="userProfileBtn">
+          <span>👤</span>
+          User Profile
+        </button>
+        <!-- NEW: Download Chat Button -->
+        <button class="sidebar-button" id="downloadChatBtn">
+          <span>💾</span>
+          Download Chat
+        </button>
         <button class="sidebar-button" id="loginBtn">
-          <span>🔒</span>
+          <span>🔐</span>
           Login
         </button>
       </div>
@@ -49,7 +84,6 @@
         </button>
       </div>
 
-
       <div class="sidebar-section">
         <div class="sidebar-section-title">Search Chats</div>
         <input type="text" class="search-box" id="searchChats" placeholder="Search your chats...">
@@ -58,7 +92,7 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">Chat History</div>
         <div class="chat-history" id="chatHistory">
-          </div>
+        </div>
         <div class="clear-history-section">
           <button class="clear-history-btn" id="clearHistoryBtn">
             <span>🗑️</span>
@@ -105,9 +139,9 @@
               <div class="example-prompt-title">Calculator</div>
               <div class="example-prompt-subtitle">Solve math problems</div>
             </div>
-            <div class="example-prompt" onclick="fillPrompt('What is the weather like?')">
-              <div class="example-prompt-title">Weather</div>
-              <div class="example-prompt-subtitle">Search for weather information</div>
+            <div class="example-prompt" onclick="fillPrompt('VERA-AI Introduction')">
+              <div class="example-prompt-title">VERA-AI Introduction</div>
+              <div class="example-prompt-subtitle">Search for VERA-AI Introduction information</div>
             </div>
             <div class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
               <div class="example-prompt-title">Learn</div>
@@ -167,8 +201,83 @@
         <input type="text" id="username" placeholder="Username" required>
         <input type="password" id="password" placeholder="Password" required>
         <button type="submit">Submit</button>
-        <a href="#" class="forgot-password">Forgot Password?</a>
+        <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot Password?</a>
       </form>
+    </div>
+  </div>
+
+  <!-- NEW: Forgot Password Modal -->
+  <div class="modal" id="forgotPasswordModal">
+    <div class="modal-content">
+      <span class="close-button" id="closeForgotPasswordModal">&times;</span>
+      <h2>Reset Password</h2>
+      <form id="forgotPasswordForm">
+        <input type="text" id="resetUsername" placeholder="Username" required>
+        <input type="password" id="newPassword" placeholder="New Password" required>
+        <input type="password" id="confirmPassword" placeholder="Confirm New Password" required>
+        <button type="submit">Reset Password</button>
+        <a href="#" class="back-to-login" id="backToLoginLink">Back to Login</a>
+      </form>
+    </div>
+  </div>
+
+  <!-- NEW: User Profile Modal -->
+  <div class="modal" id="userProfileModal">
+    <div class="download-modal-content">
+      <span class="close-button" id="closeUserProfileModal">&times;</span>
+      <div class="download-header">
+        <h2>User Profile</h2>
+        <p>Manage your personal information</p>
+      </div>
+      
+      <div class="user-profile-section">
+        <div class="profile-picture-container">
+          <img src="https://ui-avatars.com/api/?name=User&background=10b981&color=fff&size=150" 
+               alt="Profile Picture" 
+               id="profilePicture" 
+               class="profile-picture">
+          <label for="profilePictureInput" class="profile-picture-upload">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </label>
+          <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+        </div>
+
+        <form id="userProfileForm" class="user-profile-form">
+          <div class="profile-form-group">
+            <label for="profileUsername">Username</label>
+            <input type="text" id="profileUsername" class="profile-input" readonly>
+          </div>
+
+          <div class="profile-form-group">
+            <label for="profileEmail">Email</label>
+            <input type="email" id="profileEmail" class="profile-input" placeholder="email@example.com">
+          </div>
+
+          <div class="profile-form-group">
+            <label for="profileFullName">Full Name</label>
+            <input type="text" id="profileFullName" class="profile-input" placeholder="John Doe">
+          </div>
+
+          <div class="profile-form-group">
+            <label for="profileBio">Bio</label>
+            <textarea id="profileBio" class="profile-textarea" rows="3" placeholder="Tell us about yourself..."></textarea>
+          </div>
+
+          <div class="profile-form-group">
+            <label for="profileLocation">Location</label>
+            <input type="text" id="profileLocation" class="profile-input" placeholder="City, Country">
+          </div>
+
+          <button type="submit" class="profile-save-btn">Save Changes</button>
+        </form>
+
+        <div id="profileSuccessMessage" class="profile-success" style="display: none;">
+          <p>✅ Profile updated successfully!</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -234,13 +343,14 @@
           <span class="platform-version">Ollama Llama 3.2</span>
         </div>
       </div>
-      
+
       <div class="system-requirements">
         <h3>System Requirements</h3>
         <h4>Operating System</h4>
         <ul>
           <li><b>Windows 10/11:</b> Recommended (full feature support)</li>
-          <li><b>macOS 11+:</b> Works but without some Windows-only features (PowerPoint/Word automation, brightness control)</li>
+          <li><b>macOS 11+:</b> Works but without some Windows-only features (PowerPoint/Word automation, brightness
+            control)</li>
           <li><b>Linux:</b> Works but with limited file conversion features</li>
         </ul>
         <h4>Hardware</h4>
@@ -256,7 +366,8 @@
         <h4>Software</h4>
         <ul>
           <li><b>Python:</b> Version 3.10 or newer (64-bit recommended)</li>
-          <li><b>Microsoft Office (Word & PowerPoint):</b> Required for advanced file conversions and presentations (Windows only)</li>
+          <li><b>Microsoft Office (Word & PowerPoint):</b> Required for advanced file conversions and presentations
+            (Windows only)</li>
           <li><b>Google Chrome / Microsoft Edge:</b> For integrated search commands</li>
           <li><b>FFmpeg:</b> For yt-dlp video downloads (optional)</li>
         </ul>
@@ -264,12 +375,122 @@
         <p>An active internet connection is required for:</p>
         <ul>
           <li>Ollama AI model calls</li>
-          <li>Youtubees and playback</li>
+          <li>YouTube searches and playback</li>
           <li>Web scraping and API requests</li>
         </ul>
       </div>
 
       <p id="downloadMessage" class="download-message"></p>
+    </div>
+  </div>
+
+  <div class="modal" id="guidanceModal">
+    <div class="download-modal-content">
+      <span class="close-button" id="closeGuidanceModal">&times;</span>
+      <div class="download-header">
+        <h2>V.E.R.A Guidance</h2>
+        <p>How to install the desktop app and a list of available commands.</p>
+      </div>
+
+      <div class="guidance-section">
+        <h3>How to Install V.E.R.A Desktop</h3>
+        <p>Follow these steps to get the V.E.R.A desktop version running on your computer.</p>
+
+        <div class="guidance-video-container">
+          <div class="guidance-video-wrapper">
+            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube video player" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+          </div>
+          <div class="guidance-video-wrapper">
+            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube video player" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+          </div>
+        </div>
+
+        <ol class="guidance-steps">
+          <li>Download the correct version for your operating system (Windows, Mac, or Linux) from the <b
+              id="openDownloadModalFromGuidance" style="color: #3b82f6; cursor: pointer;">Download</b> section.</li>
+          <li>Unzip the downloaded file to a folder you can easily access.</li>
+          <li>Run the `V.E.R.A.exe` (on Windows) or the corresponding executable for your system.</li>
+          <li>Follow any on-screen prompts to install dependencies (like Python, if not already installed).</li>
+          <li>Once installed, launch V.E.R.A from your desktop or applications folder.</li>
+        </ol>
+      </div>
+
+      <div class="guidance-section">
+        <h3>V.E.R.A Command List</h3>
+        <p>Here are some of the commands V.E.R.A understands:</p>
+
+        <ul class="command-list">
+          <li><code>hello</code> / <code>hi</code> / <code>hey</code> - Greet V.E.R.A.</li>
+          <li><code>how are you</code> - Check on V.E.R.A.</li>
+          <li><code>what time is it</code> - Get the current time.</li>
+          <li><code>what is the date</code> - Get today's date.</li>
+          <li><code>what is 25 * 17</code> - Perform math calculations.</li>
+          <li><code>open google.com</code> - Open any website in a new tab.</li>
+          <li><code>open youtube</code> - Open common websites by name.</li>
+          <li><em>(Paste a YouTube URL)</em> - V.E.R.A will offer to download the video as MP3 or MP4.</li>
+          <li><code>tell me about...</code> - Ask any general knowledge question for a web search.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal" id="feedbackModal">
+    <div class="download-modal-content">
+      <span class="close-button" id="closeFeedbackModal">&times;</span>
+      <div class="download-header">
+        <h2>Send Feedback</h2>
+        <p>We'd love to hear your thoughts on V.E.R.A!</p>
+      </div>
+
+      <div class="feedback-section">
+        <form id="feedbackForm">
+          <div class="feedback-form-group">
+            <label for="feedbackName">Name (Optional)</label>
+            <input type="text" id="feedbackName" class="feedback-input" placeholder="Your name">
+          </div>
+
+          <div class="feedback-form-group">
+            <label for="feedbackEmail">Email (Optional)</label>
+            <input type="email" id="feedbackEmail" class="feedback-input" placeholder="your.email@example.com">
+          </div>
+
+          <div class="feedback-form-group">
+            <label for="feedbackType">Feedback Type</label>
+            <select id="feedbackType" class="feedback-select" required>
+              <option value="">Select type</option>
+              <option value="bug">Bug Report</option>
+              <option value="feature">Feature Request</option>
+              <option value="improvement">Improvement Suggestion</option>
+              <option value="praise">General Praise</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="feedback-form-group">
+            <label for="feedbackMessage">Your Feedback *</label>
+            <textarea id="feedbackMessage" class="feedback-textarea" rows="6" placeholder="Tell us what you think..."
+              required></textarea>
+          </div>
+
+          <div class="feedback-form-group">
+            <label>
+              <input type="checkbox" id="feedbackConsent" required>
+              I agree to share this feedback with the V.E.R.A teamF
+            </label>
+          </div>
+
+          <button type="submit" class="feedback-submit-btn">Submit Feedback</button>
+        </form>
+
+        <div id="feedbackSuccessMessage" class="feedback-success" style="display: none;">
+          <p>✅ Thank you! Your feedback has been submitted successfully.</p>
+        </div>
+      </div>
     </div>
   </div>
 
