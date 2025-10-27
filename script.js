@@ -37,6 +37,43 @@ const macDownloadBtn = document.getElementById('macDownloadBtn');
 const downloadMessage = document.getElementById('downloadMessage');
 const ollamaDownloadBtn = document.getElementById('ollamaDownloadBtn');
 
+// Guidance Modal Elements
+const guidanceBtn = document.getElementById('guidanceBtn');
+const guidanceModal = document.getElementById('guidanceModal');
+const closeGuidanceModal = document.getElementById('closeGuidanceModal');
+const openDownloadModalFromGuidance = document.getElementById('openDownloadModalFromGuidance');
+
+// Feedback Modal Elements
+const feedbackBtn = document.getElementById('feedbackBtn');
+const feedbackModal = document.getElementById('feedbackModal');
+const closeFeedbackModal = document.getElementById('closeFeedbackModal');
+const feedbackForm = document.getElementById('feedbackForm');
+const feedbackSuccessMessage = document.getElementById('feedbackSuccessMessage');
+
+// Forgot Password Modal Elements
+const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+const closeForgotPasswordModal = document.getElementById('closeForgotPasswordModal');
+const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+const backToLoginLink = document.getElementById('backToLoginLink');
+
+// User Profile Modal Elements
+const userProfileBtn = document.getElementById('userProfileBtn');
+const userProfileModal = document.getElementById('userProfileModal');
+const closeUserProfileModal = document.getElementById('closeUserProfileModal');
+const userProfileForm = document.getElementById('userProfileForm');
+const profilePicture = document.getElementById('profilePicture');
+const profilePictureInput = document.getElementById('profilePictureInput');
+const profileUsername = document.getElementById('profileUsername');
+const profileEmail = document.getElementById('profileEmail');
+const profileFullName = document.getElementById('profileFullName');
+const profileBio = document.getElementById('profileBio');
+const profileLocation = document.getElementById('profileLocation');
+const profileSuccessMessage = document.getElementById('profileSuccessMessage');
+
+// Download Chat Button
+const downloadChatBtn = document.getElementById('downloadChatBtn');
+
 
 let recognition;
 let isRecording = false;
@@ -57,8 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
     welcomeOverlay.style.opacity = '0';
     setTimeout(() => {
       welcomeOverlay.style.display = 'none';
-    }, 3000);
-  }, 3000);
+    }, 1000); // Changed to 1s to match CSS transition
+  }, 3000); // Keep 3s total duration
 
   loadChatHistory();
   loadUserData();
@@ -69,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Attach toggle events
   mobileToggle.addEventListener('click', toggleSidebar);
-  sidebarToggle.addEventListener('click', toggleSidebar); // Also allow close button to toggle
+  sidebarToggle.addEventListener('click', toggleSidebar);
 });
 
 function initializeSidebarState() {
@@ -134,13 +171,15 @@ function checkLoginStatus() {
     if (currentUser) {
         loginBtn.style.display = 'none';
         logoutSection.style.display = 'block';
+        userProfileBtn.style.display = 'flex'; // Show profile button
         const welcomeTitle = document.querySelector('.welcome-title');
         if(welcomeTitle) {
            welcomeTitle.textContent = `Hello, ${currentUser}! How can I help?`;
         }
     } else {
-        loginBtn.style.display = 'block';
+        loginBtn.style.display = 'flex';
         logoutSection.style.display = 'none';
+        userProfileBtn.style.display = 'none'; // Hide profile button
         const welcomeTitle = document.querySelector('.welcome-title');
         if(welcomeTitle) {
            welcomeTitle.textContent = 'How can I help you today?';
@@ -162,7 +201,7 @@ function startNewChat() {
   clearChat();
   renderChatHistory();
   setActiveChatInHistory(currentChatId);
-  checkLoginStatus(); // Re-apply username to welcome message
+  checkLoginStatus(); // Update welcome message
 }
 
 function clearChat() {
@@ -179,9 +218,9 @@ function clearChat() {
           <div class="example-prompt-title">Calculator</div>
           <div class="example-prompt-subtitle">Solve math problems</div>
         </div>
-        <div class="example-prompt" onclick="fillPrompt('What is the weather like?')">
-          <div class="example-prompt-title">Weather</div>
-          <div class="example-prompt-subtitle">Search for weather information</div>
+        <div class="example-prompt" onclick="fillPrompt('VERA-AI Introduction')">
+          <div class="example-prompt-title">VERA-AI Introduction</div>
+          <div class="example-prompt-subtitle">Search for VERA-AI Introduction information</div>
         </div>
         <div class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
           <div class="example-prompt-title">Learn</div>
@@ -209,7 +248,7 @@ function loadChat(chatId) {
 
   setActiveChatInHistory(chatId);
   closeSidebar();
-  checkLoginStatus(); // Re-apply username to welcome message
+  checkLoginStatus(); // Update welcome message
 }
 
 function saveMessage(text, sender) {
@@ -243,13 +282,19 @@ function renderChatHistory() {
 
   chatHistory.innerHTML = filteredChats.map(chat => {
     const lastMessage = chat.messages[chat.messages.length - 1];
-    const preview = lastMessage ? lastMessage.text : 'No messages yet';
+    const preview = lastMessage ? (lastMessage.text.length > 60 ? lastMessage.text.substring(0,60) + '...' : lastMessage.text) : 'No messages yet';
     const date = new Date(chat.updatedAt).toLocaleDateString();
+
+    // Create a temp div to strip HTML for the preview
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = preview;
+    const plainPreview = tempDiv.textContent || tempDiv.innerText || '';
+
 
     return `
       <div class="chat-history-item" data-chat-id="${chat.id}">
         <div class="chat-history-title">${chat.title}</div>
-        <div class="chat-history-preview">${preview.length > 60 ? preview.substring(0, 60) + '...' : preview}</div>
+        <div class="chat-history-preview">${plainPreview}</div>
         <div class="chat-history-date">${date}</div>
         <div class="chat-history-actions">
           <button class="delete-chat-btn" data-chat-id="${chat.id}" title="Delete this chat">
@@ -358,7 +403,16 @@ function addMessage(text, sender, save = true) {
 
   const avatar = document.createElement('div');
   avatar.className = `message-avatar ${sender}-avatar`;
-  avatar.textContent = sender === 'user' ? (currentUser ? currentUser.charAt(0).toUpperCase() : 'U') : 'V';
+  
+  if (sender === 'user') {
+      const userInitial = currentUser ? currentUser.charAt(0).toUpperCase() : 'U';
+      const pfp = (userData[currentUser] && userData[currentUser].profilePicture) ? 
+                  `<img src="${userData[currentUser].profilePicture}" alt="PFP" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;">` : 
+                  userInitial;
+      avatar.innerHTML = pfp;
+  } else {
+      avatar.textContent = 'V';
+  }
 
   const content = document.createElement('div');
   content.className = 'message-content';
@@ -377,8 +431,8 @@ function addMessage(text, sender, save = true) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
   if (save) {
-    const savedText = content.textContent || text; // Save plain text version
-    saveMessage(savedText, sender);
+    // Save the raw HTML content to preserve formatting
+    saveMessage(text, sender);
   }
 }
 
@@ -386,7 +440,13 @@ function speak(text, onEndCallback) {
     if (synth.speaking) {
         synth.cancel();
     }
-    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Strip HTML tags for speech
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = text;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+    const utterance = new SpeechSynthesisUtterance(plainText);
 
     utterance.onstart = () => {
         isSpeaking = true;
@@ -418,21 +478,19 @@ function speak(text, onEndCallback) {
     synth.speak(utterance);
 }
 
-// Function to prompt user for YouTube download format
 function promptForDownloadFormat(url) {
-    youtubeLinkToDownload = url; // Store the URL globally
+    youtubeLinkToDownload = url;
     const messageContent = `
         <p>I detected a YouTube link! What format would you like to download it as?</p>
-        <div class="flex space-x-2 mt-2">
-            <button class="download-option-btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200" data-format="mp3">Download MP3</button>
-            <button class="download-option-btn bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200" data-format="mp4">Download MP4</button>
+        <div class="download-options" style="display: flex; gap: 8px; margin-top: 8px;">
+            <button class="download-option-btn" data-format="mp3" style="background-color: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Download MP3</button>
+            <button class="download-option-btn" data-format="mp4" style="background-color: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Download MP4</button>
         </div>
     `;
     addMessage(messageContent, 'bot');
     speak("I detected a YouTube link! What format would you like to download it as?");
 }
 
-// Function to simulate YouTube download
 function simulateYouTubeDownload(format) {
     if (!youtubeLinkToDownload) {
         addMessage("No YouTube link found to download.", 'bot');
@@ -440,44 +498,39 @@ function simulateYouTubeDownload(format) {
         return;
     }
 
-    // Add a message indicating download in progress
     addMessage(`<i>Attempting to download ${format.toUpperCase()} from YouTube...</i>`, 'bot', false);
     speak(`Attempting to download ${format.toUpperCase()} from YouTube.`, () => {
-        // Simulate download delay
         setTimeout(() => {
-            const isSuccess = Math.random() > 0.3; // 70% chance of success
+            const isSuccess = Math.random() > 0.3;
             let statusText = '';
             let statusColor = '';
 
             if (isSuccess) {
                 statusText = `✅ Download of ${format.toUpperCase()} complete! (Simulation)`;
-                statusColor = 'text-green-600';
+                statusColor = 'color: #10b981;';
                 
-                // Trigger a dummy file download
-                // This is a placeholder as direct YouTube download is not possible from client-side JS.
                 const dummyContent = `This is a simulated download for the YouTube link: ${youtubeLinkToDownload}\nFormat: ${format.toUpperCase()}\n\nA real YouTube downloader requires a backend server.`;
                 const blob = new Blob([dummyContent], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `youtube_download_simulation.${format === 'mp3' ? 'txt' : 'txt'}`; // Still using .txt for dummy file
+                a.download = `youtube_download_simulation.${format === 'mp3' ? 'txt' : 'txt'}`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                URL.revokeObjectURL(url); // Clean up the URL object
+                URL.revokeObjectURL(url);
 
                 speak(`Download of ${format.toUpperCase()} complete! A dummy file has been downloaded.`);
             } else {
                 statusText = `❌ Download of ${format.toUpperCase()} failed. (Simulation - requires backend)`;
-                statusColor = 'text-red-600';
+                statusColor = 'color: #ef4444;';
                 speak(`Download of ${format.toUpperCase()} failed.`);
             }
 
-            // Update the last message or add a new one with the status
-            const statusMessageContent = `<span class="${statusColor}">${statusText}</span>`;
+            const statusMessageContent = `<span style="${statusColor}">${statusText}</span>`;
             addMessage(statusMessageContent, 'bot');
-            youtubeLinkToDownload = null; // Clear the stored URL
-        }, 3000); // Simulate a 3-second download
+            youtubeLinkToDownload = null;
+        }, 3000);
     });
 }
 
@@ -488,17 +541,14 @@ async function processQuery(query) {
   const lowerQuery = query.toLowerCase().trim();
   let response = '';
   
-  // Regex to detect YouTube URLs
   const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|v\/|)([\w-]{11})(?:\S+)?/i;
   const youtubeMatch = query.match(youtubeRegex);
 
   if (youtubeMatch) {
-    promptForDownloadFormat(youtubeMatch[0]); // Pass the full matched URL
+    promptForDownloadFormat(youtubeMatch[0]);
     return;
   }
 
-
-  // --- Direct Commands & Simple Q&A ---
   if (['hello', 'hi', 'hey'].includes(lowerQuery)) {
     response = currentUser ? `Hello, ${currentUser}! How can I assist you?` : "Hello! How can I assist you today?";
     addMessage(response, 'bot');
@@ -532,7 +582,6 @@ async function processQuery(query) {
     return;
   }
 
-  // --- Math Calculation ---
   const mathRegex = /^(what is|what's|calculate|compute)?\s*(-?[\d\.]+\s*[\+\-\*\/]\s*)+-?[\d\.]+$/;
   if(mathRegex.test(lowerQuery)) {
       try {
@@ -549,9 +598,8 @@ async function processQuery(query) {
       }
   }
 
-  // --- Website Opening ---
   const commonSites = {
-    youtube: "https://www.youtube.com", // This will now be handled by the youtubeRegex above
+    youtube: "https://www.youtube.com",
     duckduckgo: "https://duckduckgo.com",
     firefox: "https://firefox.com",
     google: "https://www.google.com",
@@ -579,7 +627,6 @@ async function processQuery(query) {
     }
   }
 
-  // --- General Knowledge Search (Fetch data from browse/DuckDuckGo) ---
   const tempMessage = document.createElement('div');
   tempMessage.className = 'message bot-message';
   tempMessage.innerHTML = `<div class="message-avatar bot-avatar">V</div><div class="message-content"><i>Searching for an answer...</i></div>`;
@@ -599,11 +646,10 @@ async function processQuery(query) {
     const doc = parser.parseFromString(html, 'text/html');
     const snippet = doc.querySelector('.result__snippet');
 
-    chatMessages.removeChild(tempMessage); // Remove the "Searching..." message
+    chatMessages.removeChild(tempMessage);
 
     let answer = snippet ? snippet.textContent.trim() : "Sorry, I couldn't find a clear answer to your question.";
     
-    // Limit answer length
     if (answer.length > 500) {
       answer = answer.substring(0, 500) + '...';
     }
@@ -671,12 +717,11 @@ function initializeSpeechRecognition() {
   }
 }
 
-// --- Theme Toggle ---
 function initializeTheme() {
     const savedTheme = localStorage.getItem('vera_theme') || 'dark';
     if (savedTheme === 'light') {
         document.body.classList.add('light-mode');
-        themeIcon.textContent = '☀️'; // Corrected icon for light mode
+        themeIcon.textContent = '🌜';
         themeText.textContent = 'Dark Mode';
     } else {
         document.body.classList.remove('light-mode');
@@ -684,6 +729,41 @@ function initializeTheme() {
         themeText.textContent = 'Light Mode';
     }
 }
+
+function downloadChat() {
+  const chat = chatData.find(c => c.id === currentChatId);
+  if (!chat || chat.messages.length === 0) {
+    addMessage("There is no chat to download.", 'bot');
+    speak("There is no chat to download.");
+    return;
+  }
+
+  let chatContent = `Chat Title: ${chat.title}\n`;
+  chatContent += `Saved: ${new Date().toLocaleString()}\n\n`;
+  
+  chat.messages.forEach(msg => {
+    // Strip HTML for plain text download
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = msg.text;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+    
+    chatContent += `[${new Date(msg.timestamp).toLocaleString()}] ${msg.sender.toUpperCase()}:\n${plainText}\n\n`;
+  });
+
+  const blob = new Blob([chatContent], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `VERA_Chat_${chat.title.replace(/[^a-z0-9]/gi, '_')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  addMessage("Current chat has been downloaded as a .txt file.", 'bot');
+  speak("Chat downloaded.");
+}
+
 
 themeToggleBtn.addEventListener('click', () => {
     document.body.classList.toggle('light-mode');
@@ -700,7 +780,6 @@ themeToggleBtn.addEventListener('click', () => {
 });
 
 
-// --- Event Listeners ---
 form.addEventListener('submit', function(e) {
   e.preventDefault();
   const query = queryInput.value.trim();
@@ -764,7 +843,6 @@ confirmDialog.addEventListener('click', function(e) {
   }
 });
 
-// Event listener for dynamically added download buttons
 chatMessages.addEventListener('click', function(e) {
     if (e.target.classList.contains('download-option-btn')) {
         const format = e.target.dataset.format;
@@ -782,6 +860,8 @@ logoutBtn.addEventListener('click', () => {
     saveUserData();
     checkLoginStatus();
     addMessage("You have been logged out.", 'bot');
+    // Reload history to remove custom PFP
+    loadChat(currentChatId); 
 });
 
 
@@ -789,9 +869,8 @@ closeLoginModal.addEventListener('click', () => {
     loginModal.style.display = 'none';
 });
 
-// --- Download Modal Listeners ---
 desktopDownloadBtn.addEventListener('click', () => {
-  downloadMessage.style.display = 'none'; // Hide message on modal open
+  downloadMessage.style.display = 'none';
   downloadModal.style.display = 'block';
 });
 
@@ -799,42 +878,205 @@ closeDownloadModal.addEventListener('click', () => {
   downloadModal.style.display = 'none';
 });
 
+guidanceBtn.addEventListener('click', () => {
+  guidanceModal.style.display = 'block';
+});
+
+closeGuidanceModal.addEventListener('click', () => {
+  guidanceModal.style.display = 'none';
+});
+
+openDownloadModalFromGuidance.addEventListener('click', () => {
+  guidanceModal.style.display = 'none';
+  downloadModal.style.display = 'block';
+});
+
+// Feedback Modal Listeners
+feedbackBtn.addEventListener('click', () => {
+  feedbackModal.style.display = 'block';
+  feedbackSuccessMessage.style.display = 'none';
+  feedbackForm.reset();
+});
+
+closeFeedbackModal.addEventListener('click', () => {
+  feedbackModal.style.display = 'none';
+});
+
+feedbackForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  
+  const feedbackData = {
+    name: document.getElementById('feedbackName').value,
+    email: document.getElementById('feedbackEmail').value,
+    type: document.getElementById('feedbackType').value,
+    message: document.getElementById('feedbackMessage').value,
+    timestamp: new Date().toISOString(),
+    user: currentUser || 'Anonymous'
+  };
+  
+  console.log('Feedback submitted:', feedbackData);
+  
+  try {
+    const storedFeedback = localStorage.getItem('vera_feedback') || '[]';
+    const feedbackArray = JSON.parse(storedFeedback);
+    feedbackArray.push(feedbackData);
+    localStorage.setItem('vera_feedback', JSON.stringify(feedbackArray));
+  } catch (e) {
+    console.error('Error saving feedback:', e);
+  }
+  
+  feedbackForm.style.display = 'none';
+  feedbackSuccessMessage.style.display = 'block';
+  
+  setTimeout(() => {
+    feedbackModal.style.display = 'none';
+    feedbackForm.style.display = 'block';
+    feedbackForm.reset();
+  }, 3000);
+});
+
+
 function showComingSoonMessage() {
     downloadMessage.textContent = 'Coming Soon!';
     downloadMessage.style.display = 'block';
     setTimeout(() => {
         downloadMessage.style.display = 'none';
-    }, 3000); // Hide after 3 seconds
+    }, 3000);
 }
 
 linuxDownloadBtn.addEventListener('click', (e) => {
-    e.preventDefault(); // Prevent following the href="#"
+    e.preventDefault();
     showComingSoonMessage();
 });
 
 macDownloadBtn.addEventListener('click', (e) => {
-    e.preventDefault(); // Prevent following the href="#"
+    e.preventDefault();
     showComingSoonMessage();
 });
 
-// New: Ollama Download Button Listener
 ollamaDownloadBtn.addEventListener('click', (e) => {
-    e.preventDefault(); // Prevent default link behavior
+    e.preventDefault();
 
     const ollamaInstructions = `
         <h3 style="font-size: 1.2rem; margin-bottom: 15px;">How to install Ollama and Llama 3.2:</h3>
-        <p style="font-size: 1rem; margin-bottom: 10px;">1. <b>Download Ollama:</b> Visit <a href="https://ollama.com/download" target="_blank" class="text-blue-400 hover:underline">ollama.com/download</a> and download the installer for your operating system.</p>
+        <p style="font-size: 1rem; margin-bottom: 10px;">1. <b>Download Ollama:</b> Visit <a href="https://ollama.com/download" target="_blank" style="color: #60a5fa; text-decoration: underline;">ollama.com/download</a> and download the installer for your operating system.</p>
         <p style="font-size: 1rem; margin-bottom: 10px;">2. <b>Install Ollama:</b> Run the downloaded installer and follow the on-screen instructions.</p>
         <p style="font-size: 1rem; margin-bottom: 10px;">3. <b>Open your Terminal/Command Prompt:</b> After installation, open your terminal (macOS/Linux) or Command Prompt/PowerShell (Windows).</p>
         <p style="font-size: 1rem; margin-bottom: 10px;">4. <b>Download Llama 3.2:</b> In the terminal, run the command: <code style="background-color: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-family: monospace; font-size: 0.95rem; display: inline-block; margin-top: 5px;">ollama run llama3.2</code></p>
         <p style="font-size: 1rem; margin-bottom: 10px;">This command will download the Llama 3.2 model. Once downloaded, it will start running, and you can interact with it directly in your terminal.</p>
-        <p style="font-size: 1rem;">For more detailed instructions and advanced usage, refer to the <a href="https://ollama.com/blog/llama3" target="_blank" class="text-blue-400 hover:underline">Ollama Llama 3 blog post</a>.</p>
+        <p style="font-size: 1rem;">For more detailed instructions and advanced usage, refer to the <a href="https://ollama.com/blog/llama3" target="_blank" style="color: #60a5fa; text-decoration: underline;">Ollama Llama 3 blog post</a>.</p>
     `;
     
     downloadMessage.innerHTML = ollamaInstructions;
     downloadMessage.style.display = 'block';
-    downloadModal.scrollTop = 0; // Scroll to top to ensure instructions are visible
+    downloadModal.scrollTop = 0;
 });
+
+
+// New Listeners for Forgot Password
+forgotPasswordLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  loginModal.style.display = 'none';
+  forgotPasswordModal.style.display = 'block';
+});
+
+closeForgotPasswordModal.addEventListener('click', () => {
+  forgotPasswordModal.style.display = 'none';
+});
+
+backToLoginLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  forgotPasswordModal.style.display = 'none';
+  loginModal.style.display = 'block';
+});
+
+forgotPasswordForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const username = document.getElementById('resetUsername').value;
+  const newPassword = document.getElementById('newPassword').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
+
+  if (newPassword !== confirmPassword) {
+    addMessage("New passwords do not match.", 'bot');
+    speak("New passwords do not match.");
+    return;
+  }
+
+  if (userData[username]) {
+    userData[username].password = newPassword;
+    saveUserData();
+    addMessage(`Password for ${username} has been reset. You can now login.`, 'bot');
+    speak(`Password for ${username} has been reset.`);
+    forgotPasswordModal.style.display = 'none';
+    loginModal.style.display = 'block';
+    forgotPasswordForm.reset();
+  } else {
+    addMessage(`User ${username} not found.`, 'bot');
+    speak(`User ${username} not found.`);
+  }
+});
+
+// New Listeners for User Profile
+userProfileBtn.addEventListener('click', () => {
+  if (!currentUser) return;
+
+  // Load current user data into modal
+  const data = userData[currentUser] || {};
+  profileUsername.value = currentUser;
+  profileEmail.value = data.email || '';
+  profileFullName.value = data.fullName || '';
+  profileBio.value = data.bio || '';
+  profileLocation.value = data.location || '';
+  profilePicture.src = data.profilePicture || `https://ui-avatars.com/api/?name=${currentUser.charAt(0)}&background=10b981&color=fff&size=150`;
+
+  profileSuccessMessage.style.display = 'none';
+  userProfileModal.style.display = 'block';
+});
+
+closeUserProfileModal.addEventListener('click', () => {
+  userProfileModal.style.display = 'none';
+});
+
+profilePictureInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target.result;
+      profilePicture.src = dataUrl;
+      
+      // Save PFP data immediately
+      if (!userData[currentUser]) userData[currentUser] = {};
+      userData[currentUser].profilePicture = dataUrl;
+      saveUserData();
+      // Reload current chat to update avatar
+      loadChat(currentChatId); 
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+userProfileForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+
+  if (!userData[currentUser]) userData[currentUser] = {};
+  
+  userData[currentUser].email = profileEmail.value;
+  userData[currentUser].fullName = profileFullName.value;
+  userData[currentUser].bio = profileBio.value;
+  userData[currentUser].location = profileLocation.value;
+  
+  saveUserData();
+
+  profileSuccessMessage.style.display = 'block';
+  setTimeout(() => {
+    profileSuccessMessage.style.display = 'none';
+  }, 3000);
+});
+
+// Download Chat Button Listener
+downloadChatBtn.addEventListener('click', downloadChat);
 
 
 window.addEventListener('click', (event) => {
@@ -843,6 +1085,18 @@ window.addEventListener('click', (event) => {
     }
     if (event.target == downloadModal) {
         downloadModal.style.display = 'none';
+    }
+    if (event.target == guidanceModal) {
+        guidanceModal.style.display = 'none';
+    }
+    if (event.target == feedbackModal) {
+        feedbackModal.style.display = 'none';
+    }
+    if (event.target == forgotPasswordModal) {
+        forgotPasswordModal.style.display = 'none';
+    }
+    if (event.target == userProfileModal) {
+        userProfileModal.style.display = 'none';
     }
 });
 
@@ -855,10 +1109,20 @@ loginForm.addEventListener('submit', (e) => {
         // Login successful
     } else if (userData[username]) {
         addMessage('Incorrect password!', 'bot');
+        speak('Incorrect password!');
         return;
     } else {
         // New user registration
-        userData[username] = { password: password };
+        userData[username] = { 
+          password: password, 
+          email: '', 
+          fullName: '', 
+          bio: '', 
+          location: '', 
+          profilePicture: '' 
+        };
+        addMessage(`Welcome, ${username}! Your account has been created.`, 'bot');
+        speak(`Welcome, ${username}! Your account has been created.`);
     }
     currentUser = username;
     saveUserData();
@@ -867,7 +1131,10 @@ loginForm.addEventListener('submit', (e) => {
     loginModal.style.display = 'none';
     loginForm.reset();
     addMessage(`Welcome, ${currentUser}!`, 'bot');
-
+    speak(`Welcome, ${currentUser}!`);
+    
+    // Reload current chat to show PFP
+    loadChat(currentChatId);
 });
 
 initializeSpeechRecognition();
@@ -882,6 +1149,14 @@ document.addEventListener('keydown', function(e) {
         loginModal.style.display = 'none';
     } else if (downloadModal.style.display === 'block') {
         downloadModal.style.display = 'none';
+    } else if (guidanceModal.style.display === 'block') {
+        guidanceModal.style.display = 'none';
+    } else if (feedbackModal.style.display === 'block') {
+        feedbackModal.style.display = 'none';
+    } else if (forgotPasswordModal.style.display === 'block') {
+        forgotPasswordModal.style.display = 'none';
+    } else if (userProfileModal.style.display === 'block') {
+        userProfileModal.style.display = 'none';
     }
   }
 });
