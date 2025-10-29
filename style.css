@@ -2036,3 +2036,39 @@ body.light-mode .profile-success {
 body.light-mode .profile-success p {
   color: #047857;
 }
+
+/* Add these styles to your CSS file */
+.login-status {
+    text-align: center;
+    margin: 10px 0;
+    color: var(--text-color);
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--text-color);
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Add these button states */
+#loginForm button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: var(--button-bg);
+}
+
+#loginForm .error-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    text-align: center;
+}
