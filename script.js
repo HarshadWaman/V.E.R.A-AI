@@ -88,6 +88,9 @@ const synth = window.speechSynthesis;
 // Global variable to store YouTube link for download options
 let youtubeLinkToDownload = null;
 
+// Add this constant near the top of script.js
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdMYLBXuIDCE1wIZGpC4XqD6NfgjvdmvioVM6w5_WbME_uJYvcK7kbd24juyJIrBEP/exec';
+
 document.addEventListener('DOMContentLoaded', function() {
   // Show welcome screen
   setTimeout(() => {
@@ -902,37 +905,39 @@ closeFeedbackModal.addEventListener('click', () => {
   feedbackModal.style.display = 'none';
 });
 
-feedbackForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  
-  const feedbackData = {
-    name: document.getElementById('feedbackName').value,
-    email: document.getElementById('feedbackEmail').value,
-    type: document.getElementById('feedbackType').value,
-    message: document.getElementById('feedbackMessage').value,
-    timestamp: new Date().toISOString(),
-    user: currentUser || 'Anonymous'
-  };
-  
-  console.log('Feedback submitted:', feedbackData);
-  
-  try {
-    const storedFeedback = localStorage.getItem('vera_feedback') || '[]';
-    const feedbackArray = JSON.parse(storedFeedback);
-    feedbackArray.push(feedbackData);
-    localStorage.setItem('vera_feedback', JSON.stringify(feedbackArray));
-  } catch (e) {
-    console.error('Error saving feedback:', e);
-  }
-  
-  feedbackForm.style.display = 'none';
-  feedbackSuccessMessage.style.display = 'block';
-  
-  setTimeout(() => {
-    feedbackModal.style.display = 'none';
-    feedbackForm.style.display = 'block';
-    feedbackForm.reset();
-  }, 3000);
+// Replace the feedbackForm submit event listener with:
+feedbackForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const feedbackData = {
+        username: currentUser || 'Anonymous',
+        name: document.getElementById('feedbackName').value,
+        email: document.getElementById('feedbackEmail').value,
+        feedbackType: document.getElementById('feedbackType').value,
+        message: document.getElementById('feedbackMessage').value,
+        consent: document.getElementById('feedbackConsent').checked ? 'Yes' : 'No'
+    };
+
+    try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=feedback&` + new URLSearchParams(feedbackData));
+        const data = await response.json();
+        
+        if(data.status === 'success') {
+            feedbackForm.style.display = 'none';
+            feedbackSuccessMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                feedbackModal.style.display = 'none';
+                feedbackForm.style.display = 'block';
+                feedbackForm.reset();
+            }, 3000);
+        } else {
+            addMessage('Failed to submit feedback! Please try again.', 'bot');
+        }
+    } catch (error) {
+        console.error('Feedback submission error:', error);
+        addMessage('Failed to submit feedback! Please try again later.', 'bot');
+    }
 });
 
 
@@ -990,30 +995,42 @@ backToLoginLink.addEventListener('click', (e) => {
   loginModal.style.display = 'block';
 });
 
-forgotPasswordForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const username = document.getElementById('resetUsername').value;
-  const newPassword = document.getElementById('newPassword').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
+// Replace the forgotPasswordForm submit event listener with:
+forgotPasswordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('resetUsername').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
 
-  if (newPassword !== confirmPassword) {
-    addMessage("New passwords do not match.", 'bot');
-    speak("New passwords do not match.");
-    return;
-  }
+    if (newPassword !== confirmPassword) {
+        addMessage("New passwords do not match.", 'bot');
+        speak("New passwords do not match.");
+        return;
+    }
 
-  if (userData[username]) {
-    userData[username].password = newPassword;
-    saveUserData();
-    addMessage(`Password for ${username} has been reset. You can now login.`, 'bot');
-    speak(`Password for ${username} has been reset.`);
-    forgotPasswordModal.style.display = 'none';
-    loginModal.style.display = 'block';
-    forgotPasswordForm.reset();
-  } else {
-    addMessage(`User ${username} not found.`, 'bot');
-    speak(`User ${username} not found.`);
-  }
+    try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=resetPassword&username=${encodeURIComponent(username)}&newPassword=${encodeURIComponent(newPassword)}`);
+        const data = await response.json();
+        
+        if(data.status === 'success') {
+            if (!userData[username]) userData[username] = {};
+            userData[username].password = newPassword;
+            saveUserData();
+            
+            addMessage(`Password for ${username} has been reset. You can now login.`, 'bot');
+            speak(`Password for ${username} has been reset.`);
+            forgotPasswordModal.style.display = 'none';
+            loginModal.style.display = 'block';
+            forgotPasswordForm.reset();
+        } else {
+            addMessage(`Failed to reset password! ${data.message}`, 'bot');
+            speak(`Failed to reset password! ${data.message}`);
+        }
+    } catch (error) {
+        console.error('Password reset error:', error);
+        addMessage('Failed to reset password! Please try again later.', 'bot');
+        speak('Failed to reset password! Please try again later.');
+    }
 });
 
 // New Listeners for User Profile
@@ -1056,23 +1073,40 @@ profilePictureInput.addEventListener('change', (e) => {
   }
 });
 
-userProfileForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (!currentUser) return;
+// Replace the userProfileForm submit event listener with:
+userProfileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
 
-  if (!userData[currentUser]) userData[currentUser] = {};
-  
-  userData[currentUser].email = profileEmail.value;
-  userData[currentUser].fullName = profileFullName.value;
-  userData[currentUser].bio = profileBio.value;
-  userData[currentUser].location = profileLocation.value;
-  
-  saveUserData();
+    const profileData = {
+        username: currentUser,
+        email: profileEmail.value,
+        fullName: profileFullName.value,
+        bio: profileBio.value,
+        location: profileLocation.value,
+        profilePicture: userData[currentUser]?.profilePicture || ''
+    };
 
-  profileSuccessMessage.style.display = 'block';
-  setTimeout(() => {
-    profileSuccessMessage.style.display = 'none';
-  }, 3000);
+    try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=profile&` + new URLSearchParams(profileData));
+        const data = await response.json();
+        
+        if(data.status === 'success') {
+            if (!userData[currentUser]) userData[currentUser] = {};
+            Object.assign(userData[currentUser], profileData);
+            saveUserData();
+
+            profileSuccessMessage.style.display = 'block';
+            setTimeout(() => {
+                profileSuccessMessage.style.display = 'none';
+            }, 3000);
+        } else {
+            addMessage('Failed to update profile! Please try again.', 'bot');
+        }
+    } catch (error) {
+        console.error('Profile update error:', error);
+        addMessage('Failed to update profile! Please try again later.', 'bot');
+    }
 });
 
 // Download Chat Button Listener
@@ -1100,41 +1134,73 @@ window.addEventListener('click', (event) => {
     }
 });
 
-loginForm.addEventListener('submit', (e) => {
+// Replace the loginForm submit event listener with:
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    if (!checkConnectivity()) {
+        addMessage('No internet connection. Please check your network and try again.', 'bot');
+        return;
+    }
+
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    if(userData[username] && userData[username].password === password) {
-        // Login successful
-    } else if (userData[username]) {
-        addMessage('Incorrect password!', 'bot');
-        speak('Incorrect password!');
-        return;
-    } else {
-        // New user registration
-        userData[username] = { 
-          password: password, 
-          email: '', 
-          fullName: '', 
-          bio: '', 
-          location: '', 
-          profilePicture: '' 
-        };
-        addMessage(`Welcome, ${username}! Your account has been created.`, 'bot');
-        speak(`Welcome, ${username}! Your account has been created.`);
-    }
-    currentUser = username;
-    saveUserData();
-    checkLoginStatus();
+    // Show loading state
+    const submitButton = loginForm.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.textContent;
+    submitButton.textContent = 'Logging in...';
+    submitButton.disabled = true;
 
-    loginModal.style.display = 'none';
-    loginForm.reset();
-    addMessage(`Welcome, ${currentUser}!`, 'bot');
-    speak(`Welcome, ${currentUser}!`);
-    
-    // Reload current chat to show PFP
-    loadChat(currentChatId);
+    try {
+        const encodedUsername = encodeURIComponent(username);
+        const encodedPassword = encodeURIComponent(password);
+        const url = `${APPS_SCRIPT_URL}?action=login&username=${encodedUsername}&password=${encodedPassword}`;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            currentUser = username;
+            userData[username] = userData[username] || {
+                password: password,
+                email: '',
+                fullName: '',
+                bio: '',
+                location: '',
+                profilePicture: ''
+            };
+            saveUserData();
+            checkLoginStatus();
+
+            loginModal.style.display = 'none';
+            loginForm.reset();
+            addMessage(`Welcome back, ${currentUser}!`, 'bot');
+            speak(`Welcome back, ${currentUser}!`);
+        } else {
+            addMessage(`Login failed: ${data.message || 'Invalid credentials'}`, 'bot');
+            speak('Login failed. Please check your credentials.');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        
+        let errorMessage = 'Unable to connect to the server. Please try again later.';
+        if (error.message.includes('HTTP error')) {
+            errorMessage = 'Server error occurred. Please try again later.';
+        }
+        
+        addMessage(errorMessage, 'bot');
+        speak(errorMessage);
+    } finally {
+        // Reset button state
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
+    }
 });
 
 initializeSpeechRecognition();
@@ -1162,3 +1228,8 @@ document.addEventListener('keydown', function(e) {
 });
 
 queryInput.focus();
+
+// Add this function near the top with other utility functions
+function checkConnectivity() {
+  return navigator.onLine;
+}
