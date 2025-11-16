@@ -75,6 +75,20 @@ const profileSuccessMessage = document.getElementById('profileSuccessMessage');
 const downloadChatBtn = document.getElementById('downloadChatBtn');
 
 
+// Registration Modal Elements
+const registrationModal = document.getElementById('registrationModal');
+const closeRegistrationModal = document.getElementById('closeRegistrationModal');
+const registrationForm = document.getElementById('registrationForm');
+const showLoginLink = document.getElementById('showLoginLink');
+
+// Add near the top with other DOM element references
+const regEmail = document.getElementById('regEmail');
+const registrationStatus = document.querySelector('.registration-status');
+const regUsername = document.getElementById('regUsername');
+const regPassword = document.getElementById('regPassword');
+const confirmRegPassword = document.getElementById('confirmRegPassword');
+
+
 let recognition;
 let isRecording = false;
 let isSpeaking = false;
@@ -89,28 +103,87 @@ const synth = window.speechSynthesis;
 let youtubeLinkToDownload = null;
 
 // Add this constant near the top of script.js
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdMYLBXuIDCE1wIZGpC4XqD6NfgjvdmvioVM6w5_WbME_uJYvcK7kbd24juyJIrBEP/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8sOqYI1si4pMzmui_UZZswFxwcK39mfUy5EhsXuViuvdCRnUAKI1AtN4NoIKa8Dv4/exec';
+const UPDATE_INTERVAL = 30000; // Check every 30 seconds
 
 document.addEventListener('DOMContentLoaded', function() {
+  // CRITICAL FIX: Prevent checkLoginStatus from showing modals during init
+  const skipInitialCheck = true;
+  
+  setupSheets();
+  
   // Show welcome screen
   setTimeout(() => {
     welcomeOverlay.style.opacity = '0';
+    welcomeOverlay.style.pointerEvents = 'none';
     setTimeout(() => {
       welcomeOverlay.style.display = 'none';
-    }, 1000); // Changed to 1s to match CSS transition
-  }, 3000); // Keep 3s total duration
+      // Check first visit AFTER welcome overlay is fully hidden
+      checkFirstTimeVisitor();
+    }, 1000);
+  }, 3000);
 
   loadChatHistory();
   loadUserData();
-  checkLoginStatus();
+  // DON'T call checkLoginStatus here - it conflicts with checkFirstTimeVisitor
+  // checkLoginStatus();  // <-- REMOVE OR COMMENT THIS LINE
   startNewChat();
   initializeSidebarState();
   initializeTheme();
+  initModals();
+  initializeSpeechRecognition();
   
   // Attach toggle events
   mobileToggle.addEventListener('click', toggleSidebar);
   sidebarToggle.addEventListener('click', toggleSidebar);
 });
+
+// Replace the checkFirstTimeVisitor function (around line 85-105):
+function checkFirstTimeVisitor() {
+  const hasVisited = localStorage.getItem('vera_visited');
+  const currentUserExists = localStorage.getItem('vera_current_user');
+  
+  console.log('Checking first time visitor...');
+  console.log('Has visited:', hasVisited);
+  console.log('Current user exists:', currentUserExists);
+  
+  // Wait for DOM to be fully ready
+  setTimeout(() => {
+    if (!hasVisited) {
+      // First time visitor - show registration
+      console.log('First time visitor - showing registration');
+      localStorage.setItem('vera_visited', 'true');
+      
+      // Hide all other modals
+      loginModal.style.display = 'none';
+      
+      // Show registration modal
+      registrationModal.style.display = 'flex';
+      registrationModal.classList.add('active');
+    } else if (!currentUserExists) {
+      // Returning visitor but not logged in - show login
+      console.log('Returning visitor - showing login');
+      
+      // Hide registration modal
+      registrationModal.style.display = 'none';
+      registrationModal.classList.remove('active');
+      
+      // Show login modal
+      loginModal.style.display = 'flex';
+    } else {
+      // User already logged in
+      console.log('User already logged in');
+      registrationModal.style.display = 'none';
+      loginModal.style.display = 'none';
+      checkLoginStatus();
+    }
+  }, 100);
+}
+
+function setupSheets() {
+  fetch(`${APPS_SCRIPT_URL}?action=setupSheets`)
+    .catch(err => console.log('Sheets setup initiated'));
+}
 
 function initializeSidebarState() {
   // Default to collapsed on smaller screens, open on larger screens
@@ -171,25 +244,56 @@ function saveUserData() {
 }
 
 function checkLoginStatus() {
-    if (currentUser) {
-        loginBtn.style.display = 'none';
-        logoutSection.style.display = 'block';
-        userProfileBtn.style.display = 'flex'; // Show profile button
-        const welcomeTitle = document.querySelector('.welcome-title');
-        if(welcomeTitle) {
-           welcomeTitle.textContent = `Hello, ${currentUser}! How can I help?`;
-        }
-    } else {
-        loginBtn.style.display = 'flex';
-        logoutSection.style.display = 'none';
-        userProfileBtn.style.display = 'none'; // Hide profile button
-        const welcomeTitle = document.querySelector('.welcome-title');
-        if(welcomeTitle) {
-           welcomeTitle.textContent = 'How can I help you today?';
+    const currentUserFromStorage = localStorage.getItem('vera_current_user');
+    const userDataFromStorage = localStorage.getItem('vera_user_data');
+    
+    if (currentUserFromStorage) {
+        currentUser = currentUserFromStorage;
+        if (userDataFromStorage) {
+            userData = JSON.parse(userDataFromStorage);
         }
     }
+    
+    updateUIForLoggedInUser();
 }
 
+function updateUIForLoggedInUser() {
+  if (!currentUser) {
+    // User not logged in - show login button, hide logout
+    if (loginBtn) loginBtn.style.display = 'block';
+    if (logoutSection) logoutSection.style.display = 'none';
+    
+    // Reset welcome message
+    const welcomeTitle = document.querySelector('.welcome-title');
+    if (welcomeTitle) {
+      welcomeTitle.textContent = 'How can I help you today?';
+    }
+  } else {
+    // User is logged in - hide login button, show logout
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutSection) logoutSection.style.display = 'block';
+    
+    // Update welcome message with user name
+    const welcomeTitle = document.querySelector('.welcome-title');
+    if (welcomeTitle) {
+      const userName = (userData[currentUser] && userData[currentUser].fullName) || currentUser || 'User';
+      welcomeTitle.textContent = `Hello, ${userName}! How can I help?`;
+    }
+  }
+}
+
+function showRegistrationModal() {
+  registrationModal.classList.add('active');
+  registrationModal.style.display = 'flex';
+  loginModal.classList.remove('active');
+  loginModal.style.display = 'none';
+}
+
+function showLoginModal() {
+  loginModal.style.display = 'block';
+  registrationModal.classList.remove('active');
+  registrationModal.style.display = 'none';
+}
 
 function startNewChat() {
   currentChatId = Date.now().toString();
@@ -440,45 +544,58 @@ function addMessage(text, sender, save = true) {
 }
 
 function speak(text, onEndCallback) {
-    if (synth.speaking) {
-        synth.cancel();
-    }
-    
-    // Strip HTML tags for speech
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = text;
-    const plainText = tempDiv.textContent || tempDiv.innerText || '';
-
-    const utterance = new SpeechSynthesisUtterance(plainText);
-
-    utterance.onstart = () => {
-        isSpeaking = true;
-        micButton.classList.add('speaking');
-        micIcon.style.display = 'none';
-        stopIcon.style.display = 'block';
-        micButton.title = 'V.E.R.A is speaking... Click to stop';
-    };
-
-    utterance.onend = () => {
-        isSpeaking = false;
-        micButton.classList.remove('speaking');
-        micIcon.style.display = 'block';
-        stopIcon.style.display = 'none';
-        micButton.title = 'Voice input';
-        if (onEndCallback) {
-            onEndCallback();
+    try {
+        if (synth.speaking) {
+            synth.cancel();
         }
-    };
+        
+        // Strip HTML tags for speech
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text;
+        const plainText = tempDiv.textContent || tempDiv.innerText || '';
 
-    utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event.error);
-        isSpeaking = false;
-        micButton.classList.remove('recording');
-        micIcon.style.display = 'block';
-        stopIcon.style.display = 'none';
-        micButton.title = 'Voice input';
-    };
-    synth.speak(utterance);
+        if (!plainText) return;
+
+        const utterance = new SpeechSynthesisUtterance(plainText);
+
+        utterance.onstart = () => {
+            isSpeaking = true;
+            if (micButton) {
+                micButton.classList.add('speaking');
+                if (micIcon) micIcon.style.display = 'none';
+                if (stopIcon) stopIcon.style.display = 'block';
+                micButton.title = 'V.E.R.A is speaking... Click to stop';
+            }
+        };
+
+        utterance.onend = () => {
+            isSpeaking = false;
+            if (micButton) {
+                micButton.classList.remove('speaking');
+                if (micIcon) micIcon.style.display = 'block';
+                if (stopIcon) stopIcon.style.display = 'none';
+                micButton.title = 'Voice input';
+            }
+            if (onEndCallback) {
+                onEndCallback();
+            }
+        };
+
+        utterance.onerror = (event) => {
+            console.error('Speech synthesis error:', event.error);
+            isSpeaking = false;
+            if (micButton) {
+                micButton.classList.remove('speaking');
+                if (micIcon) micIcon.style.display = 'block';
+                if (stopIcon) stopIcon.style.display = 'none';
+                micButton.title = 'Voice input';
+            }
+        };
+
+        synth.speak(utterance);
+    } catch (error) {
+        console.error('Speech synthesis error:', error);
+    }
 }
 
 function promptForDownloadFormat(url) {
@@ -828,6 +945,7 @@ micButton.addEventListener('click', function() {
 });
 
 
+
 sidebarOverlay.addEventListener('click', closeSidebar);
 newChatBtn.addEventListener('click', startNewChat);
 searchChats.addEventListener('input', renderChatHistory);
@@ -858,111 +976,144 @@ loginBtn.addEventListener('click', () => {
     loginModal.style.display = 'block';
 });
 
+// Create Account link handler - Add this AFTER loginBtn definition
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for DOM to be ready, then attach listener
+    setTimeout(() => {
+        const createAccountLink = document.getElementById('createAccountLink');
+        if (createAccountLink) {
+            createAccountLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Create account clicked');
+                
+                // Hide login
+                loginModal.style.display = 'none';
+                loginForm.reset();
+                
+                // Show registration
+                registrationModal.style.display = 'flex';
+                registrationModal.classList.add('active');
+            });
+        } else {
+            console.error('createAccountLink not found');
+        }
+    }, 100);
+});
+
+// Show registration modal when clicking "Create Account" 
+document.addEventListener('DOMContentLoaded', function() {
+  // Make sure registration modal shows on first visit
+  const regAccountBtn = document.querySelector('.registration-footer a') || 
+                       document.getElementById('showLoginLink');
+  
+  if (regAccountBtn) {
+    regAccountBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      showRegistrationModal();
+    });
+  }
+});
+
+// Make sure these functions are properly defined
+function showRegistrationModal() {
+  registrationModal.classList.add('active');
+  registrationModal.style.display = 'flex';
+  loginModal.classList.remove('active');
+  loginModal.style.display = 'none';
+}
+
+function showLoginModal() {
+  loginModal.style.display = 'block';
+  registrationModal.classList.remove('active');
+  registrationModal.style.display = 'none';
+}
+
 logoutBtn.addEventListener('click', () => {
+    // Stop update checks
+    stopUpdateCheck();
+    
+    // Clear user data
     currentUser = null;
-    saveUserData();
+    localStorage.removeItem('vera_current_user');
+    
+    // Update UI
+    updateUIForLoggedInUser();
     checkLoginStatus();
-    addMessage("You have been logged out.", 'bot');
-    // Reload history to remove custom PFP
-    loadChat(currentChatId); 
+    
+    // Clear chat and show welcome
+    startNewChat();
+    
+    addMessage("You have been logged out successfully.", 'bot');
+    speak("You have been logged out successfully.");
 });
 
-
-closeLoginModal.addEventListener('click', () => {
+closeLoginModal.addEventListener('click', (e) => {
+    e.preventDefault();
+    console.log('Closing login modal');
     loginModal.style.display = 'none';
+    loginForm.reset();
 });
 
+// Replace the closeRegistrationModal listener
+closeRegistrationModal.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Closing registration modal');
+    registrationModal.style.display = 'none';
+    registrationModal.classList.remove('active');
+    registrationForm.reset();
+});
+
+// Replace the existing desktopDownloadBtn click listener
 desktopDownloadBtn.addEventListener('click', () => {
+  if (!currentUser) {
+    // Show login modal if user is not logged in
+    loginModal.style.display = 'block';
+    // Add a message to inform user
+    addMessage("Please log in to access download options.", 'bot');
+    speak("Please log in to access download options.");
+    return;
+  }
+  
+  // If user is logged in, show download modal
   downloadMessage.style.display = 'none';
   downloadModal.style.display = 'block';
 });
 
-closeDownloadModal.addEventListener('click', () => {
-  downloadModal.style.display = 'none';
-});
-
-guidanceBtn.addEventListener('click', () => {
-  guidanceModal.style.display = 'block';
-});
-
-closeGuidanceModal.addEventListener('click', () => {
-  guidanceModal.style.display = 'none';
-});
-
-openDownloadModalFromGuidance.addEventListener('click', () => {
-  guidanceModal.style.display = 'none';
-  downloadModal.style.display = 'block';
-});
-
-// Feedback Modal Listeners
-feedbackBtn.addEventListener('click', () => {
-  feedbackModal.style.display = 'block';
-  feedbackSuccessMessage.style.display = 'none';
-  feedbackForm.reset();
-});
-
-closeFeedbackModal.addEventListener('click', () => {
-  feedbackModal.style.display = 'none';
-});
-
-// Replace the feedbackForm submit event listener with:
-feedbackForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const feedbackData = {
-        username: currentUser || 'Anonymous',
-        name: document.getElementById('feedbackName').value,
-        email: document.getElementById('feedbackEmail').value,
-        feedbackType: document.getElementById('feedbackType').value,
-        message: document.getElementById('feedbackMessage').value,
-        consent: document.getElementById('feedbackConsent').checked ? 'Yes' : 'No'
-    };
-
-    try {
-        const response = await fetch(`${APPS_SCRIPT_URL}?action=feedback&` + new URLSearchParams(feedbackData));
-        const data = await response.json();
-        
-        if(data.status === 'success') {
-            feedbackForm.style.display = 'none';
-            feedbackSuccessMessage.style.display = 'block';
-            
-            setTimeout(() => {
-                feedbackModal.style.display = 'none';
-                feedbackForm.style.display = 'block';
-                feedbackForm.reset();
-            }, 3000);
-        } else {
-            addMessage('Failed to submit feedback! Please try again.', 'bot');
-        }
-    } catch (error) {
-        console.error('Feedback submission error:', error);
-        addMessage('Failed to submit feedback! Please try again later.', 'bot');
-    }
-});
-
-
-function showComingSoonMessage() {
-    downloadMessage.textContent = 'Coming Soon!';
-    downloadMessage.style.display = 'block';
-    setTimeout(() => {
-        downloadMessage.style.display = 'none';
-    }, 3000);
-}
-
+// Also update Linux and Mac download buttons
 linuxDownloadBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    showComingSoonMessage();
+  e.preventDefault();
+  if (!currentUser) {
+    loginModal.style.display = 'block';
+    addMessage("Please log in to access download options.", 'bot');
+    speak("Please log in to access download options.");
+    return;
+  }
+  showComingSoonMessage();
 });
 
 macDownloadBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    showComingSoonMessage();
+  e.preventDefault();
+  if (!currentUser) {
+    loginModal.style.display = 'block';
+    addMessage("Please log in to access download options.", 'bot');
+    speak("Please log in to access download options.");
+    return;
+  }
+  showComingSoonMessage();
 });
 
 ollamaDownloadBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  if (!currentUser) {
+    loginModal.style.display = 'block';
+    addMessage("Please log in to access download options.", 'bot');
+    speak("Please log in to access download options.");
+    return;
+  }
 
-    const ollamaInstructions = `
+  const ollamaInstructions = `
         <h3 style="font-size: 1.2rem; margin-bottom: 15px;">How to install Ollama and Llama 3.2:</h3>
         <p style="font-size: 1rem; margin-bottom: 10px;">1. <b>Download Ollama:</b> Visit <a href="https://ollama.com/download" target="_blank" style="color: #60a5fa; text-decoration: underline;">ollama.com/download</a> and download the installer for your operating system.</p>
         <p style="font-size: 1rem; margin-bottom: 10px;">2. <b>Install Ollama:</b> Run the downloaded installer and follow the on-screen instructions.</p>
@@ -1032,6 +1183,7 @@ forgotPasswordForm.addEventListener('submit', async (e) => {
         speak('Failed to reset password! Please try again later.');
     }
 });
+
 
 // New Listeners for User Profile
 userProfileBtn.addEventListener('click', () => {
@@ -1113,28 +1265,408 @@ userProfileForm.addEventListener('submit', async (e) => {
 downloadChatBtn.addEventListener('click', downloadChat);
 
 
+
+// Add this function to check if it's first visit
+function checkFirstVisit() {
+    if (!localStorage.getItem('vera_visited') && registrationModal) {
+        registrationModal.style.display = 'block';
+        localStorage.setItem('vera_visited', 'true');
+    }
+}
+
+// Add registration form handler
+registrationForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!checkConnectivity()) {
+        addMessage('No internet connection. Please check your network and try again.', 'bot');
+        return;
+    }
+
+    const username = regUsername.value.trim();
+    const email = regEmail.value.trim();
+    const password = regPassword.value;
+    const confirmPassword = confirmRegPassword.value;
+
+    // Validation
+    if (!username || !email || !password) {
+        addMessage('Please fill in all fields.', 'bot');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        addMessage('Passwords do not match!', 'bot');
+        return;
+    }
+
+    const submitButton = registrationForm.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Creating Account...';
+
+    try {
+        const response = await fetch(
+            `${APPS_SCRIPT_URL}?action=register&` +
+            `username=${encodeURIComponent(username)}&` +
+            `email=${encodeURIComponent(email)}&` +
+            `password=${encodeURIComponent(password)}&` +
+            `confirmPassword=${encodeURIComponent(confirmPassword)}`
+        );
+        
+        const data = await response.json();
+        console.log('Registration response:', data);
+
+        if (data.status === 'success') {
+            // Show success message in chat
+            addMessage('✅ Account created successfully! Please login with your credentials.', 'bot');
+            speak('Account created successfully! Please login.');
+            
+            // Clear form
+            registrationForm.reset();
+            
+            // Hide registration modal and show login modal
+            registrationModal.style.display = 'none';
+            registrationModal.classList.remove('active');
+            
+            setTimeout(() => {
+                loginModal.style.display = 'flex';
+            }, 500);
+        } else {
+            addMessage(`❌ ${data.message}`, 'bot');
+            speak(`Registration failed: ${data.message}`);
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        addMessage('Failed to create account. Please try again later.', 'bot');
+        speak('Failed to create account. Please try again later.');
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+    }
+});
+
+// Replace the modal close button handlers (around line 1070):
+closeRegistrationModal.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Closing registration modal');
+    registrationModal.style.display = 'none';
+    registrationModal.classList.remove('active');
+    registrationForm.reset();
+});
+
+closeLoginModal.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Closing login modal');
+    loginModal.style.display = 'none';
+    loginForm.reset();
+});
+
+// Replace the showLoginLink handler (around line 1085):
+showLoginLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Switching to login modal');
+    
+    // Hide registration
+    registrationModal.style.display = 'none';
+    registrationModal.classList.remove('active');
+    registrationForm.reset();
+    
+    // Show login
+    loginModal.style.display = 'flex';
+});
+
+// Update the window click handler (around line 1095):
 window.addEventListener('click', (event) => {
-    if (event.target == loginModal) {
+    if (event.target === registrationModal) {
+        registrationModal.style.display = 'none';
+        registrationModal.classList.remove('active');
+    }
+    if (event.target === loginModal) {
         loginModal.style.display = 'none';
     }
-    if (event.target == downloadModal) {
+    if (event.target === downloadModal) {
         downloadModal.style.display = 'none';
     }
-    if (event.target == guidanceModal) {
+    if (event.target === guidanceModal) {
         guidanceModal.style.display = 'none';
     }
-    if (event.target == feedbackModal) {
+    if (event.target === feedbackModal) {
         feedbackModal.style.display = 'none';
     }
-    if (event.target == forgotPasswordModal) {
+    if (event.target === forgotPasswordModal) {
         forgotPasswordModal.style.display = 'none';
     }
-    if (event.target == userProfileModal) {
+    if (event.target === userProfileModal) {
         userProfileModal.style.display = 'none';
     }
 });
 
-// Replace the loginForm submit event listener with:
+// Call checkFirstVisit when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    checkFirstVisit();
+    // ... existing DOMContentLoaded code ...
+});
+
+// Add this function near the top with other utility functions
+function checkConnectivity() {
+  return navigator.onLine;
+}
+
+// Add these event listeners after the other modal-related listeners
+
+// Guidance Modal
+guidanceBtn.addEventListener('click', () => {
+    guidanceModal.style.display = 'block';
+});
+
+closeGuidanceModal.addEventListener('click', () => {
+    guidanceModal.style.display = 'none';
+});
+
+// Feedback Modal
+feedbackBtn.addEventListener('click', () => {
+    feedbackModal.style.display = 'block';
+});
+
+closeFeedbackModal.addEventListener('click', () => {
+    feedbackModal.style.display = 'none';
+});
+
+// Download Modal Close Button
+closeDownloadModal.addEventListener('click', () => {
+    downloadModal.style.display = 'none';
+});
+
+// Add feedback form submission handling
+feedbackForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!checkConnectivity()) {
+        addMessage('No internet connection. Please check your network and try again.', 'bot');
+        return;
+    }
+
+    // Get form data
+    const feedbackData = {
+        username: currentUser || 'Anonymous',
+        name: document.getElementById('feedbackName').value,
+        email: document.getElementById('feedbackEmail').value,
+        feedbackType: document.getElementById('feedbackType').value,
+        message: document.getElementById('feedbackMessage').value,
+        consent: document.getElementById('feedbackConsent').checked
+    };
+
+    try {
+        // Show loading state
+        const submitButton = feedbackForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Sending...';
+
+        // Send feedback to Google Apps Script
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=feedback&` + new URLSearchParams(feedbackData));
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Show success message
+            feedbackSuccessMessage.style.display = 'block';
+            
+            // Clear form
+            feedbackForm.reset();
+            
+            // Hide success message and modal after 2 seconds
+            setTimeout(() => {
+                feedbackSuccessMessage.style.display = 'none';
+                feedbackModal.style.display = 'none';
+            }, 2000);
+
+            // Add feedback confirmation message in chat
+            addMessage("Thank you for your feedback! It has been saved successfully.", 'bot');
+            speak("Thank you for your feedback!");
+        } else {
+            throw new Error(data.message || 'Failed to save feedback');
+        }
+        
+    } catch (error) {
+        console.error('Error submitting feedback:', error);
+        addMessage("Sorry, there was an error submitting your feedback. Please try again.", 'bot');
+        speak("Sorry, there was an error submitting your feedback. Please try again.");
+    } finally {
+        // Reset button state
+        const submitButton = feedbackForm.querySelector('button[type="submit"]');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit Feedback';
+    }
+});
+
+// Add click handler for opening download modal from guidance
+openDownloadModalFromGuidance.addEventListener('click', (e) => {
+    e.preventDefault();
+    guidanceModal.style.display = 'none';
+    
+    // Check login status before showing download modal
+    if (!currentUser) {
+        loginModal.style.display = 'block';
+        addMessage("Please log in to access download options.", 'bot');
+        speak("Please log in to access download options.");
+        return;
+    }
+    
+    downloadModal.style.display = 'block';
+});
+
+// Helper function to show "Coming Soon" message
+function showComingSoonMessage() {
+    downloadMessage.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <h3>Coming Soon!</h3>
+            <p>This version is currently under development. Please check back later.</p>
+        </div>
+    `;
+    downloadMessage.style.display = 'block';
+}
+
+// Add to script.js
+function checkForUpdates() {
+    fetch(`${APPS_SCRIPT_URL}?action=getData`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Update user data
+                if (data.data.users) {
+                    updateUserData(data.data.users);
+                }
+                // Update feedback data
+                if (data.data.feedback) {
+                    updateFeedbackData(data.data.feedback);
+                }
+            }
+        })
+        .catch(error => console.error('Error checking for updates:', error));
+}
+
+function updateUserData(users) {
+    if (!Array.isArray(users)) {
+        console.error('Invalid users data:', users);
+        return;
+    }
+
+    users.forEach(user => {
+        if (!Array.isArray(user) || user.length < 2) {
+            console.error('Invalid user record:', user);
+            return;
+        }
+
+        const username = user[1]; // Column B in Sheet2
+        if (username === currentUser) {
+            // Update profile fields if the profile modal is open
+            if (userProfileModal && userProfileModal.style.display === 'block') {
+                if (profileEmail) profileEmail.value = user[2] || '';
+                if (profileFullName) profileFullName.value = user[3] || '';
+                if (profileBio) profileBio.value = user[4] || '';
+                if (profileLocation) profileLocation.value = user[5] || '';
+            }
+            
+            // Update stored user data
+            if (!userData[username]) userData[username] = {};
+            userData[username] = {
+                ...userData[username],
+                email: user[2] || '',
+                fullName: user[3] || '',
+                bio: user[4] || '',
+                location: user[5] || '',
+            };
+
+            // Trigger UI updates
+            saveUserData();
+            updateUIWithUserData();
+        }
+    });
+}
+
+function updateFeedbackData(feedback) {
+    // Update feedback display if the feedback modal is open
+    if (feedbackModal.style.display === 'block') {
+        // Update feedback display logic here
+    }
+}
+
+// Start periodic updates when user is logged in
+let updateCheckInterval;
+
+function startUpdateCheck() {
+    if (currentUser) {
+        // Initial check
+        checkForUpdates();
+        // Set up periodic checks
+        updateCheckInterval = setInterval(checkForUpdates, UPDATE_INTERVAL);
+    }
+}
+
+function stopUpdateCheck() {
+    if (updateCheckInterval) {
+        clearInterval(updateCheckInterval);
+        updateCheckInterval = null;
+    }
+}
+
+function updateUIWithUserData() {
+    if (!currentUser) return;
+
+    // Update welcome message
+    const welcomeTitle = document.querySelector('.welcome-title');
+    if (welcomeTitle) {
+        const userName = userData[currentUser]?.fullName || currentUser;
+        welcomeTitle.textContent = `Hello, ${userName}! How can I help?`;
+    }
+
+    // Update chat messages with new profile picture
+    const userAvatars = document.querySelectorAll('.user-message .message-avatar');
+    userAvatars.forEach(avatar => {
+        const pfp = userData[currentUser]?.profilePicture ? 
+            `<img src="${userData[currentUser].profilePicture}" alt="PFP" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;">` :
+            currentUser.charAt(0).toUpperCase();
+        avatar.innerHTML = pfp;
+    });
+
+    // Trigger chat history refresh to update any visible user data
+    renderChatHistory();
+}
+
+// Add this function to the end of your script.js
+function initModals() {
+    // Close modals when clicking outside of them
+    window.addEventListener('click', (event) => {
+        if (event.target == loginModal) {
+            loginModal.style.display = 'none';
+        }
+        if (event.target == registrationModal) {
+            registrationModal.style.display = 'none';
+        }
+        if (event.target == downloadModal) {
+            downloadModal.style.display = 'none';
+        }
+        if (event.target == guidanceModal) {
+            guidanceModal.style.display = 'none';
+        }
+        if (event.target == feedbackModal) {
+            feedbackModal.style.display = 'none';
+        }
+        if (event.target == forgotPasswordModal) {
+            forgotPasswordModal.style.display = 'none';
+        }
+        if (event.target == userProfileModal) {
+            userProfileModal.style.display = 'none';
+        }
+    });
+}
+
+// Call initModals after all event listeners
+initModals();
+
+// Add after other event listeners
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -1143,93 +1675,211 @@ loginForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
 
-    // Show loading state
+    if (!username || !password) {
+        addMessage('Please enter username and password.', 'bot');
+        return;
+    }
+
     const submitButton = loginForm.querySelector('button[type="submit"]');
-    const originalButtonText = submitButton.textContent;
-    submitButton.textContent = 'Logging in...';
+    const loginStatus = loginModal.querySelector('.login-status');
     submitButton.disabled = true;
+    submitButton.textContent = 'Logging in...';
+
+    // Show loading status
+    if (loginStatus) {
+        loginStatus.style.display = 'block';
+        loginStatus.innerHTML = '<div class="loading-spinner"></div><span class="status-message">Verifying credentials...</span>';
+    }
 
     try {
-        const encodedUsername = encodeURIComponent(username);
-        const encodedPassword = encodeURIComponent(password);
-        const url = `${APPS_SCRIPT_URL}?action=login&username=${encodedUsername}&password=${encodedPassword}`;
+        const response = await fetch(
+            `${APPS_SCRIPT_URL}?action=login&` +
+            `username=${encodeURIComponent(username)}&` +
+            `password=${encodeURIComponent(password)}`
+        );
         
-        const response = await fetch(url);
+        const data = await response.json();
+        console.log('Login response:', data);
+
+        if (data.status === 'success') {
+            // Save user info
+            currentUser = username;
+            if (!userData[username]) {
+                userData[username] = {
+                    password: password,
+                    email: '',
+                    fullName: '',
+                    bio: '',
+                    location: '',
+                    profilePicture: ''
+                };
+            }
+            
+            localStorage.setItem('vera_current_user', username);
+            localStorage.setItem('vera_user_data', JSON.stringify(userData));
+            
+            // Hide login modal
+            loginModal.style.display = 'none';
+            loginForm.reset();
+            if (loginStatus) loginStatus.style.display = 'none';
+            
+            // Update UI
+            updateUIForLoggedInUser();
+            startUpdateCheck();
+            
+            addMessage(`✅ Welcome back, ${username}!`, 'bot');
+            speak(`Welcome back, ${username}!`);
+        } else if (data.message === 'Username not found') {
+            // User doesn't exist - offer to create account
+            if (loginStatus) {
+                loginStatus.innerHTML = '<span class="error-message">❌ Username not found. Would you like to create an account?</span>';
+            }
+            
+            addMessage(`❌ Username "${username}" not found. Please create an account first.`, 'bot');
+            speak('Username not found. Please create an account.');
+            
+            // Show create account link or switch to registration
+            setTimeout(() => {
+                if (confirm('Username not found. Would you like to create an account?')) {
+                    switchToRegistration();
+                    
+                    // Pre-fill username
+                    document.getElementById('regUsername').value = username;
+                }
+            }, 500);
+        } else {
+            // Wrong password or other error
+            if (loginStatus) {
+                loginStatus.innerHTML = `<span class="error-message">❌ ${data.message}</span>`;
+            }
+            addMessage(`❌ ${data.message}`, 'bot');
+            speak(data.message);
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        if (loginStatus) {
+            loginStatus.innerHTML = '<span class="error-message">❌ Connection error. Please try again.</span>';
+        }
+        addMessage('Failed to login. Please try again later.', 'bot');
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit';
+        
+        // Hide loading status after 3 seconds if there was an error
+        if (loginStatus && loginStatus.innerHTML.includes('error-message')) {
+            setTimeout(() => {
+                loginStatus.style.display = 'none';
+            }, 3000);
+        }
+    }
+});
+
+function switchToRegistration() {
+    loginModal.style.display = 'none';
+    loginForm.reset();
+    
+    registrationModal.style.display = 'flex';
+    registrationModal.classList.add('active');
+}
+
+function switchToLogin() {
+    registrationModal.style.display = 'none';
+    registrationModal.classList.remove('active');
+    registrationForm.reset();
+    
+    loginModal.style.display = 'flex';
+}
+
+async function makeAPIRequest(action, params) {
+    try {
+        const queryString = new URLSearchParams(params).toString();
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=${action}&${queryString}`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        
-        if (data.status === 'success') {
-            currentUser = username;
-            userData[username] = userData[username] || {
-                password: password,
-                email: '',
-                fullName: '',
-                bio: '',
-                location: '',
-                profilePicture: ''
-            };
-            saveUserData();
-            checkLoginStatus();
-
-            loginModal.style.display = 'none';
-            loginForm.reset();
-            addMessage(`Welcome back, ${currentUser}!`, 'bot');
-            speak(`Welcome back, ${currentUser}!`);
-        } else {
-            addMessage(`Login failed: ${data.message || 'Invalid credentials'}`, 'bot');
-            speak('Login failed. Please check your credentials.');
-        }
+        return data;
     } catch (error) {
-        console.error('Login error:', error);
-        
-        let errorMessage = 'Unable to connect to the server. Please try again later.';
-        if (error.message.includes('HTTP error')) {
-            errorMessage = 'Server error occurred. Please try again later.';
-        }
-        
-        addMessage(errorMessage, 'bot');
-        speak(errorMessage);
-    } finally {
-        // Reset button state
-        submitButton.textContent = originalButtonText;
-        submitButton.disabled = false;
+        console.error(`API Request Error (${action}):`, error);
+        throw error;
     }
-});
+}
 
-initializeSpeechRecognition();
+// Replace the handleLogin function in your Apps Script
 
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    if (confirmDialog.classList.contains('active')) {
-      hideConfirmDialog();
-    } else if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) {
-      closeSidebar();
-    } else if (loginModal.style.display === 'block') {
-        loginModal.style.display = 'none';
-    } else if (downloadModal.style.display === 'block') {
-        downloadModal.style.display = 'none';
-    } else if (guidanceModal.style.display === 'block') {
-        guidanceModal.style.display = 'none';
-    } else if (feedbackModal.style.display === 'block') {
-        feedbackModal.style.display = 'none';
-    } else if (forgotPasswordModal.style.display === 'block') {
-        forgotPasswordModal.style.display = 'none';
-    } else if (userProfileModal.style.display === 'block') {
-        userProfileModal.style.display = 'none';
-    }
+function handleLogin(e, ss) {
+  const sheet = ss.getSheetByName('Sheet1');
+  
+  if (!sheet) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: 'User database not found'
+    })).setMimeType(ContentService.MimeType.JSON);
   }
-});
 
-queryInput.focus();
-
-// Add this function near the top with other utility functions
-function checkConnectivity() {
-  return navigator.onLine;
+  const username = e && e.parameter ? String(e.parameter.username).trim() : null;
+  const password = e && e.parameter ? String(e.parameter.password) : null;
+  
+  if (!username || !password) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: 'Missing username or password'
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  try {
+    const data = sheet.getDataRange().getValues();
+    
+    // Debug logging
+    Logger.log('Login attempt - Username: ' + username);
+    Logger.log('Login attempt - Password length: ' + password.length);
+    
+    // Check if user exists and password matches (starts from row 2, skip header)
+    for (let i = 1; i < data.length; i++) {
+      const dbUsername = String(data[i][1]).trim();  // Column B = Username
+      const dbPassword = String(data[i][2]);         // Column C = Password
+      
+      // Debug logging
+      Logger.log('Checking row ' + (i+1) + ' - DB Username: "' + dbUsername + '"');
+      Logger.log('Checking row ' + (i+1) + ' - DB Password: "' + dbPassword + '"');
+      
+      if (dbUsername === username) {
+        // Found the user, now check password
+        Logger.log('User found! Comparing passwords...');
+        Logger.log('Input password: "' + password + '" (length: ' + password.length + ')');
+        Logger.log('DB password: "' + dbPassword + '" (length: ' + dbPassword.length + ')');
+        
+        if (dbPassword === password) {
+          return ContentService.createTextOutput(JSON.stringify({
+            status: 'success',
+            message: 'Login successful',
+            username: username
+          })).setMimeType(ContentService.MimeType.JSON);
+        } else {
+          return ContentService.createTextOutput(JSON.stringify({
+            status: 'error',
+            message: 'Invalid password',
+            debug: 'Expected: "' + dbPassword + '", Got: "' + password + '"'
+          })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+    
+    // User not found
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: 'Username not found'
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: 'Login error: ' + error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
