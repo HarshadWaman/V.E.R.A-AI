@@ -202,11 +202,15 @@
         <span class="status-message">Logging in...</span>
       </div>
       <form id="loginForm">
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="password" id="password" placeholder="Password" required>
+        <input type="text" id="loginUsername" placeholder="Username" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
         <button type="submit">Submit</button>
         <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot Password?</a>
       </form>
+      <!-- NEW: Add Create Account Link -->
+      <div class="modal-footer-link">
+        Don't have an account? <a href="#" id="createAccountLink">Create Account</a>
+      </div>
     </div>
   </div>
 
@@ -233,15 +237,14 @@
         <h2>User Profile</h2>
         <p>Manage your personal information</p>
       </div>
-      
+
       <div class="user-profile-section">
         <div class="profile-picture-container">
-          <img src="https://ui-avatars.com/api/?name=User&background=10b981&color=fff&size=150" 
-               alt="Profile Picture" 
-               id="profilePicture" 
-               class="profile-picture">
+          <img src="https://ui-avatars.com/api/?name=User&background=10b981&color=fff&size=150" alt="Profile Picture"
+            id="profilePicture" class="profile-picture">
           <label for="profilePictureInput" class="profile-picture-upload">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
               <circle cx="12" cy="13" r="4"></circle>
             </svg>
@@ -267,7 +270,8 @@
 
           <div class="profile-form-group">
             <label for="profileBio">Bio</label>
-            <textarea id="profileBio" class="profile-textarea" rows="3" placeholder="Tell us about yourself..."></textarea>
+            <textarea id="profileBio" class="profile-textarea" rows="3"
+              placeholder="Tell us about yourself..."></textarea>
           </div>
 
           <div class="profile-form-group">
@@ -406,7 +410,7 @@
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen></iframe>
           </div>
-        <!--   <div class="guidance-video-wrapper">
+          <!--   <div class="guidance-video-wrapper">
             <iframe src="https://harshadwaman.github.io/V.E.R.A-AI" title="YouTube video player" frameborder="0"
              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
              allowfullscreen></iframe>
@@ -494,6 +498,25 @@
         <div id="feedbackSuccessMessage" class="feedback-success" style="display: none;">
           <p>✅ Thank you! Your feedback has been submitted successfully.</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW: Registration Modal -->
+  <div class="modal" id="registrationModal">
+    <div class="modal-content">
+      <span class="close-button" id="closeRegistrationModal">&times;</span>
+      <h2>Create Account</h2>
+      <div class="registration-status" style="display: none;"></div>
+      <form id="registrationForm">
+        <input type="text" id="regUsername" placeholder="Username" required>
+        <input type="email" id="regEmail" placeholder="Email Address" required>
+        <input type="password" id="regPassword" placeholder="Password" required>
+        <input type="password" id="confirmRegPassword" placeholder="Confirm Password" required>
+        <button type="submit">Create Account</button>
+      </form>
+      <div class="registration-footer">
+        Already have an account? <a href="#" id="showLoginLink">Login here</a>
       </div>
     </div>
   </div>
