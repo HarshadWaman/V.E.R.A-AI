@@ -105,6 +105,8 @@ let youtubeLinkToDownload = null;
 // Add this constant near the top of script.js
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8sOqYI1si4pMzmui_UZZswFxwcK39mfUy5EhsXuViuvdCRnUAKI1AtN4NoIKa8Dv4/exec';
 const UPDATE_INTERVAL = 30000; // Check every 30 seconds
+const OPENAI_API_KEY = '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';
+const OPENAI_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 document.addEventListener('DOMContentLoaded', function() {
   // CRITICAL FIX: Prevent checkLoginStatus from showing modals during init
@@ -655,6 +657,45 @@ function simulateYouTubeDownload(format) {
 }
 
 
+async function getAIAnswer(query) {
+  try {
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'HTTP-Referer': 'https://vera-ai.com',
+        'X-Title': 'V.E.R.A AI Assistant'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are V.E.R.A, a helpful AI assistant. Provide clear, concise, and accurate answers to user questions. Be friendly and professional.'
+          },
+          {
+            role: 'user',
+            content: query
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('OpenAI API Error:', error);
+    throw error;
+  }
+}
+
 async function processQuery(query) {
   addMessage(query, 'user');
   
@@ -749,26 +790,19 @@ async function processQuery(query) {
 
   const tempMessage = document.createElement('div');
   tempMessage.className = 'message bot-message';
-  tempMessage.innerHTML = `<div class="message-avatar bot-avatar">V</div><div class="message-content"><i>Searching for an answer...</i></div>`;
+  tempMessage.innerHTML = `<div class="message-avatar bot-avatar">V</div><div class="message-content"><i>Getting AI answer...</i></div>`;
   chatMessages.appendChild(tempMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
-  speak(`Searching for ${query}`);
+  speak(`Getting answer for ${query}`);
 
   try {
-    const proxy = 'https://api.allorigins.win/get?url=';
-    const duckUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-    const response = await fetch(proxy + encodeURIComponent(duckUrl));
-    const data = await response.json();
-    const html = data.contents;
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const snippet = doc.querySelector('.result__snippet');
-
+    // Try to get AI answer first
+    const aiAnswer = await getAIAnswer(query);
+    
     chatMessages.removeChild(tempMessage);
-
-    let answer = snippet ? snippet.textContent.trim() : "Sorry, I couldn't find a clear answer to your question.";
+    
+    let answer = aiAnswer;
     
     if (answer.length > 500) {
       answer = answer.substring(0, 500) + '...';
@@ -778,11 +812,38 @@ async function processQuery(query) {
     speak(answer);
 
   } catch (e) {
-    console.error('Search error:', e);
-    chatMessages.removeChild(tempMessage);
-    const fallback = "Sorry, I couldn't fetch the answer right now. Please try again later.";
-    addMessage(fallback, 'bot');
-    speak(fallback);
+    console.error('AI API error, falling back to web search:', e);
+    
+    // Fallback to DuckDuckGo search if AI fails
+    try {
+      const proxy = 'https://api.allorigins.win/get?url=';
+      const duckUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+      const response = await fetch(proxy + encodeURIComponent(duckUrl));
+      const data = await response.json();
+      const html = data.contents;
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const snippet = doc.querySelector('.result__snippet');
+
+      chatMessages.removeChild(tempMessage);
+
+      let answer = snippet ? snippet.textContent.trim() : "Sorry, I couldn't find a clear answer to your question.";
+      
+      if (answer.length > 500) {
+        answer = answer.substring(0, 500) + '...';
+      }
+      
+      addMessage(answer, 'bot');
+      speak(answer);
+
+    } catch (searchError) {
+      console.error('Search error:', searchError);
+      chatMessages.removeChild(tempMessage);
+      const fallback = "Sorry, I couldn't fetch the answer right now. Please try again later.";
+      addMessage(fallback, 'bot');
+      speak(fallback);
+    }
   }
 }
 
