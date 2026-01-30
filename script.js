@@ -105,7 +105,7 @@ let youtubeLinkToDownload = null;
 // Add this constant near the top of script.js
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8sOqYI1si4pMzmui_UZZswFxwcK39mfUy5EhsXuViuvdCRnUAKI1AtN4NoIKa8Dv4/exec';
 const UPDATE_INTERVAL = 30000; // Check every 30 seconds
-const OPENAI_API_KEY = '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';
+const OPENAI_API_KEY = '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';
 const OPENAI_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1944,3 +1944,4 @@ function handleLogin(e, ss) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
+
