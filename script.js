@@ -99,40 +99,28 @@ let userData = {};
 let currentUser = null;
 const synth = window.speechSynthesis;
 
-// Global variable to store YouTube link for download options
-let youtubeLinkToDownload = null;
-
 // Add this constant near the top of script.js
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8sOqYI1si4pMzmui_UZZswFxwcK39mfUy5EhsXuViuvdCRnUAKI1AtN4NoIKa8Dv4/exec';
 const UPDATE_INTERVAL = 30000; // Check every 30 seconds
-const OPENAI_API_KEY = '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';
-const OPENAI_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const WIKIPEDIA_API_URL = 'https://en.wikipedia.org/w/api.php';
 
 document.addEventListener('DOMContentLoaded', function() {
-  // CRITICAL FIX: Prevent checkLoginStatus from showing modals during init
-  const skipInitialCheck = true;
-  
   setupSheets();
   
-  // Show welcome screen
   setTimeout(() => {
     welcomeOverlay.style.opacity = '0';
     welcomeOverlay.style.pointerEvents = 'none';
     setTimeout(() => {
       welcomeOverlay.style.display = 'none';
-      // Check first visit AFTER welcome overlay is fully hidden
-      checkFirstTimeVisitor();
-    }, 1000);
-  }, 3000);
+      restoreUserSession();
+    }, 400);
+  }, 900);
 
   loadChatHistory();
   loadUserData();
-  // DON'T call checkLoginStatus here - it conflicts with checkFirstTimeVisitor
-  // checkLoginStatus();  // <-- REMOVE OR COMMENT THIS LINE
-  startNewChat();
+  startNewChat(false);
   initializeSidebarState();
   initializeTheme();
-  initModals();
   initializeSpeechRecognition();
   
   // Attach toggle events
@@ -140,46 +128,12 @@ document.addEventListener('DOMContentLoaded', function() {
   sidebarToggle.addEventListener('click', toggleSidebar);
 });
 
-// Replace the checkFirstTimeVisitor function (around line 85-105):
-function checkFirstTimeVisitor() {
-  const hasVisited = localStorage.getItem('vera_visited');
-  const currentUserExists = localStorage.getItem('vera_current_user');
-  
-  console.log('Checking first time visitor...');
-  console.log('Has visited:', hasVisited);
-  console.log('Current user exists:', currentUserExists);
-  
-  // Wait for DOM to be fully ready
-  setTimeout(() => {
-    if (!hasVisited) {
-      // First time visitor - show registration
-      console.log('First time visitor - showing registration');
-      localStorage.setItem('vera_visited', 'true');
-      
-      // Hide all other modals
-      loginModal.style.display = 'none';
-      
-      // Show registration modal
-      registrationModal.style.display = 'flex';
-      registrationModal.classList.add('active');
-    } else if (!currentUserExists) {
-      // Returning visitor but not logged in - show login
-      console.log('Returning visitor - showing login');
-      
-      // Hide registration modal
-      registrationModal.style.display = 'none';
-      registrationModal.classList.remove('active');
-      
-      // Show login modal
-      loginModal.style.display = 'flex';
-    } else {
-      // User already logged in
-      console.log('User already logged in');
-      registrationModal.style.display = 'none';
-      loginModal.style.display = 'none';
-      checkLoginStatus();
-    }
-  }, 100);
+function restoreUserSession() {
+  if (localStorage.getItem('vera_current_user')) {
+    checkLoginStatus();
+  } else {
+    updateUIForLoggedInUser();
+  }
 }
 
 function setupSheets() {
@@ -209,7 +163,8 @@ function loadChatHistory() {
 
 function saveChatHistory() {
   try {
-    localStorage.setItem('vera_chat_history', JSON.stringify(chatData));
+    const savedChats = chatData.filter(chat => Array.isArray(chat.messages) && chat.messages.length > 0);
+    localStorage.setItem('vera_chat_history', JSON.stringify(savedChats));
     console.log('Chat history saved.');
   } catch (e) {
     console.error('Error saving chat history:', e);
@@ -291,13 +246,7 @@ function showRegistrationModal() {
   loginModal.style.display = 'none';
 }
 
-function showLoginModal() {
-  loginModal.style.display = 'block';
-  registrationModal.classList.remove('active');
-  registrationModal.style.display = 'none';
-}
-
-function startNewChat() {
+function startNewChat(persist = true) {
   currentChatId = Date.now().toString();
   const newChat = {
     id: currentChatId,
@@ -307,6 +256,7 @@ function startNewChat() {
     updatedAt: new Date().toISOString()
   };
   chatData.unshift(newChat);
+  if (persist) saveChatHistory();
   clearChat();
   renderChatHistory();
   setActiveChatInHistory(currentChatId);
@@ -317,24 +267,24 @@ function clearChat() {
   chatMessages.innerHTML = `
     <div class="welcome-section" id="welcomeSection">
       <h2 class="welcome-title">How can I help you today?</h2>
-      <p class="welcome-subtitle">Ask me anything - I can help with calculations, provide information, or just have a conversation.</p>
+      <p class="welcome-subtitle">Ask a question, solve a calculation, or look up a topic in Wikipedia’s open knowledge base.</p>
       <div class="example-prompts">
-        <div class="example-prompt" onclick="fillPrompt('What time is it?')">
-          <div class="example-prompt-title">Current Time</div>
-          <div class="example-prompt-subtitle">Get the current time</div>
-        </div>
-        <div class="example-prompt" onclick="fillPrompt('What is 25 * 17?')">
-          <div class="example-prompt-title">Calculator</div>
-          <div class="example-prompt-subtitle">Solve math problems</div>
-        </div>
-        <div class="example-prompt" onclick="fillPrompt('VERA-AI Introduction')">
-          <div class="example-prompt-title">VERA-AI Introduction</div>
-          <div class="example-prompt-subtitle">Search for VERA-AI Introduction information</div>
-        </div>
-        <div class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
-          <div class="example-prompt-title">Learn</div>
-          <div class="example-prompt-subtitle">Get information on any topic</div>
-        </div>
+        <button type="button" class="example-prompt" onclick="fillPrompt('What time is it?')">
+          <span class="example-prompt-title">Current Time</span>
+          <span class="example-prompt-subtitle">Get the current time</span>
+        </button>
+        <button type="button" class="example-prompt" onclick="fillPrompt('What is 25 * 17?')">
+          <span class="example-prompt-title">Calculator</span>
+          <span class="example-prompt-subtitle">Solve math problems</span>
+        </button>
+        <button type="button" class="example-prompt" onclick="fillPrompt('VERA-AI Introduction')">
+          <span class="example-prompt-title">VERA-AI Introduction</span>
+          <span class="example-prompt-subtitle">Search for VERA-AI Introduction information</span>
+        </button>
+        <button type="button" class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
+          <span class="example-prompt-title">Learn</span>
+          <span class="example-prompt-subtitle">Get information on any topic</span>
+        </button>
       </div>
     </div>
   `;
@@ -394,16 +344,12 @@ function renderChatHistory() {
     const preview = lastMessage ? (lastMessage.text.length > 60 ? lastMessage.text.substring(0,60) + '...' : lastMessage.text) : 'No messages yet';
     const date = new Date(chat.updatedAt).toLocaleDateString();
 
-    // Create a temp div to strip HTML for the preview
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = preview;
-    const plainPreview = tempDiv.textContent || tempDiv.innerText || '';
-
+    const plainPreview = preview.replace(/<[^>]*>/g, '');
 
     return `
-      <div class="chat-history-item" data-chat-id="${chat.id}">
-        <div class="chat-history-title">${chat.title}</div>
-        <div class="chat-history-preview">${plainPreview}</div>
+      <div class="chat-history-item" data-chat-id="${escapeHTML(chat.id)}">
+        <div class="chat-history-title">${escapeHTML(chat.title)}</div>
+        <div class="chat-history-preview">${escapeHTML(plainPreview)}</div>
         <div class="chat-history-date">${date}</div>
         <div class="chat-history-actions">
           <button class="delete-chat-btn" data-chat-id="${chat.id}" title="Delete this chat">
@@ -506,6 +452,59 @@ function updateSendButton() {
   sendButton.classList.toggle('active', hasText);
 }
 
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
+}
+
+function sanitizeMessageHTML(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  const allowedTags = new Set(['A', 'B', 'BR', 'CODE', 'DIV', 'EM', 'H3', 'I', 'LI', 'OL', 'P', 'SPAN', 'STRONG', 'UL']);
+
+  function sanitizeNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return document.createTextNode(node.textContent);
+    }
+
+    const fragment = document.createDocumentFragment();
+    if (node.nodeType !== Node.ELEMENT_NODE || !allowedTags.has(node.tagName)) {
+      Array.from(node.childNodes || []).forEach(child => fragment.appendChild(sanitizeNode(child)));
+      return fragment;
+    }
+
+    const safeElement = document.createElement(node.tagName.toLowerCase());
+    if (node.tagName === 'A') {
+      const href = node.getAttribute('href');
+      if (href) {
+        try {
+          const safeURL = new URL(href, window.location.href);
+          if (safeURL.protocol === 'https:' || safeURL.protocol === 'http:') {
+            safeElement.href = safeURL.href;
+            safeElement.target = '_blank';
+            safeElement.rel = 'noopener noreferrer';
+          }
+        } catch (error) {
+          console.warn('Skipped an invalid link in a message.');
+        }
+      }
+    }
+
+    Array.from(node.childNodes).forEach(child => safeElement.appendChild(sanitizeNode(child)));
+    fragment.appendChild(safeElement);
+    return fragment;
+  }
+
+  const safeContent = document.createDocumentFragment();
+  Array.from(template.content.childNodes).forEach(node => safeContent.appendChild(sanitizeNode(node)));
+  return safeContent;
+}
+
 function addMessage(text, sender, save = true) {
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${sender}-message`;
@@ -515,17 +514,27 @@ function addMessage(text, sender, save = true) {
   
   if (sender === 'user') {
       const userInitial = currentUser ? currentUser.charAt(0).toUpperCase() : 'U';
-      const pfp = (userData[currentUser] && userData[currentUser].profilePicture) ? 
-                  `<img src="${userData[currentUser].profilePicture}" alt="PFP" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;">` : 
-                  userInitial;
-      avatar.innerHTML = pfp;
+      const profileImage = userData[currentUser] && userData[currentUser].profilePicture;
+      if (profileImage && profileImage.startsWith('data:image/')) {
+        const image = document.createElement('img');
+        image.src = profileImage;
+        image.alt = 'Profile';
+        image.className = 'message-profile-picture';
+        avatar.appendChild(image);
+      } else {
+        avatar.textContent = userInitial;
+      }
   } else {
       avatar.textContent = 'V';
   }
 
   const content = document.createElement('div');
   content.className = 'message-content';
-  content.innerHTML = text; // Use innerHTML to render formatted text
+  if (sender === 'user') {
+    content.textContent = text;
+  } else {
+    content.appendChild(sanitizeMessageHTML(text));
+  }
 
   messageDiv.appendChild(avatar);
   messageDiv.appendChild(content);
@@ -600,100 +609,48 @@ function speak(text, onEndCallback) {
     }
 }
 
-function promptForDownloadFormat(url) {
-    youtubeLinkToDownload = url;
-    const messageContent = `
-        <p>I detected a YouTube link! What format would you like to download it as?</p>
-        <div class="download-options" style="display: flex; gap: 8px; margin-top: 8px;">
-            <button class="download-option-btn" data-format="mp3" style="background-color: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Download MP3</button>
-            <button class="download-option-btn" data-format="mp4" style="background-color: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Download MP4</button>
-        </div>
-    `;
-    addMessage(messageContent, 'bot');
-    speak("I detected a YouTube link! What format would you like to download it as?");
-}
-
-function simulateYouTubeDownload(format) {
-    if (!youtubeLinkToDownload) {
-        addMessage("No YouTube link found to download.", 'bot');
-        speak("No YouTube link found to download.");
-        return;
-    }
-
-    addMessage(`<i>Attempting to download ${format.toUpperCase()} from YouTube...</i>`, 'bot', false);
-    speak(`Attempting to download ${format.toUpperCase()} from YouTube.`, () => {
-        setTimeout(() => {
-            const isSuccess = Math.random() > 0.3;
-            let statusText = '';
-            let statusColor = '';
-
-            if (isSuccess) {
-                statusText = `✅ Download of ${format.toUpperCase()} complete! (Simulation)`;
-                statusColor = 'color: #10b981;';
-                
-                const dummyContent = `This is a simulated download for the YouTube link: ${youtubeLinkToDownload}\nFormat: ${format.toUpperCase()}\n\nA real YouTube downloader requires a backend server.`;
-                const blob = new Blob([dummyContent], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `youtube_download_simulation.${format === 'mp3' ? 'txt' : 'txt'}`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                speak(`Download of ${format.toUpperCase()} complete! A dummy file has been downloaded.`);
-            } else {
-                statusText = `❌ Download of ${format.toUpperCase()} failed. (Simulation - requires backend)`;
-                statusColor = 'color: #ef4444;';
-                speak(`Download of ${format.toUpperCase()} failed.`);
-            }
-
-            const statusMessageContent = `<span style="${statusColor}">${statusText}</span>`;
-            addMessage(statusMessageContent, 'bot');
-            youtubeLinkToDownload = null;
-        }, 3000);
-    });
+function notifyVideoDownloadUnavailable() {
+    const message = 'YouTube downloads are not available in the web version. Use YouTube’s official playback and download options.';
+    addMessage(message, 'bot');
+    speak(message);
 }
 
 
-async function getAIAnswer(query) {
-  try {
-    const response = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'HTTP-Referer': 'https://vera-ai.com',
-        'X-Title': 'V.E.R.A AI Assistant'
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are V.E.R.A, a helpful AI assistant. Provide clear, concise, and accurate answers to user questions. Be friendly and professional.'
-          },
-          {
-            role: 'user',
-            content: query
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content.trim();
-  } catch (error) {
-    console.error('OpenAI API Error:', error);
-    throw error;
+async function fetchOpenKnowledgeAnswer(query) {
+  const searchTerm = query.trim().replace(
+    /^(?:tell me about|what is|who is|where is|when was|when did|explain|define)\s+/i,
+    ''
+  ) || query.trim();
+  const params = new URLSearchParams({
+    action: 'query',
+    generator: 'search',
+    gsrsearch: searchTerm,
+    gsrnamespace: '0',
+    gsrlimit: '1',
+    prop: 'extracts',
+    exintro: '1',
+    explaintext: '1',
+    exchars: '900',
+    redirects: '1',
+    format: 'json',
+    origin: '*'
+  });
+  const response = await fetch(`${WIKIPEDIA_API_URL}?${params}`);
+  if (!response.ok) {
+    throw new Error(`Wikipedia request failed with status ${response.status}`);
   }
+
+  const data = await response.json();
+  const page = Object.values(data.query?.pages || {})
+    .sort((left, right) => left.index - right.index)
+    .find(result => typeof result.extract === 'string' && result.extract.trim());
+  if (!page) return null;
+
+  return {
+    title: page.title,
+    extract: page.extract.trim(),
+    url: `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title.replace(/ /g, '_'))}`
+  };
 }
 
 async function processQuery(query) {
@@ -706,7 +663,7 @@ async function processQuery(query) {
   const youtubeMatch = query.match(youtubeRegex);
 
   if (youtubeMatch) {
-    promptForDownloadFormat(youtubeMatch[0]);
+    notifyVideoDownloadUnavailable();
     return;
   }
 
@@ -743,20 +700,16 @@ async function processQuery(query) {
     return;
   }
 
-  const mathRegex = /^(what is|what's|calculate|compute)?\s*(-?[\d\.]+\s*[\+\-\*\/]\s*)+-?[\d\.]+$/;
-  if(mathRegex.test(lowerQuery)) {
-      try {
-          const mathQuery = lowerQuery.replace(/what is|what's|calculate|compute/g, '').trim();
-          const result = new Function(`'use strict'; return (${mathQuery})`)();
-          if (typeof result === 'number' && isFinite(result)) {
-            response = `The result of <code>${mathQuery}</code> is <strong>${result}</strong>.`;
-            addMessage(response, 'bot');
-            speak(`The answer is ${result}`);
-            return;
-          }
-      } catch (e) {
-          console.error("Math calculation error:", e);
-      }
+  const mathQuery = lowerQuery
+    .replace(/^(what is|what's|calculate|compute)\s*/, '')
+    .replace(/[?.!]+$/, '')
+    .trim();
+  const result = evaluateMathExpression(mathQuery);
+  if (result !== null) {
+    response = `The result of <code>${escapeHTML(mathQuery)}</code> is <strong>${result}</strong>.`;
+    addMessage(response, 'bot');
+    speak(`The answer is ${result}`);
+    return;
   }
 
   const commonSites = {
@@ -778,6 +731,57 @@ async function processQuery(query) {
     return;
   }
 
+  function evaluateMathExpression(expression) {
+    const normalized = expression.replace(/\s+/g, '');
+    const tokens = normalized.match(/\d+(?:\.\d+)?|[()+\-*/]/g);
+    if (!tokens || tokens.join('') !== normalized || !/[+\-*/]/.test(normalized)) return null;
+
+    let position = 0;
+    function parsePrimary() {
+      if (tokens[position] === '+' || tokens[position] === '-') {
+        const sign = tokens[position++] === '-' ? -1 : 1;
+        return sign * parsePrimary();
+      }
+      if (tokens[position] === '(') {
+        position++;
+        const value = parseExpression();
+        if (tokens[position++] !== ')') throw new Error('Missing closing parenthesis.');
+        return value;
+      }
+      const token = tokens[position++];
+      if (!token || !/^\d+(?:\.\d+)?$/.test(token)) throw new Error('Expected a number.');
+      return Number(token);
+    }
+
+    function parseTerm() {
+      let value = parsePrimary();
+      while (tokens[position] === '*' || tokens[position] === '/') {
+        const operator = tokens[position++];
+        const right = parsePrimary();
+        if (operator === '/' && right === 0) throw new Error('Cannot divide by zero.');
+        value = operator === '*' ? value * right : value / right;
+      }
+      return value;
+    }
+
+    function parseExpression() {
+      let value = parseTerm();
+      while (tokens[position] === '+' || tokens[position] === '-') {
+        const operator = tokens[position++];
+        const right = parseTerm();
+        value = operator === '+' ? value + right : value - right;
+      }
+      return value;
+    }
+
+    try {
+      const value = parseExpression();
+      return position === tokens.length && Number.isFinite(value) ? value : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   for (const keyword in commonSites) {
     if (lowerQuery.includes('open') && lowerQuery.includes(keyword)) {
       window.open(commonSites[keyword], '_blank');
@@ -790,60 +794,30 @@ async function processQuery(query) {
 
   const tempMessage = document.createElement('div');
   tempMessage.className = 'message bot-message';
-  tempMessage.innerHTML = `<div class="message-avatar bot-avatar">V</div><div class="message-content"><i>Getting AI answer...</i></div>`;
+  tempMessage.innerHTML = `<div class="message-avatar bot-avatar">V</div><div class="message-content"><i>Searching Wikipedia...</i></div>`;
   chatMessages.appendChild(tempMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
-  speak(`Getting answer for ${query}`);
-
   try {
-    // Try to get AI answer first
-    const aiAnswer = await getAIAnswer(query);
-    
+    const result = await fetchOpenKnowledgeAnswer(query);
     chatMessages.removeChild(tempMessage);
-    
-    let answer = aiAnswer;
-    
-    if (answer.length > 500) {
-      answer = answer.substring(0, 500) + '...';
+
+    if (!result) {
+      const message = 'I could not find a matching Wikipedia article. Try a more specific topic.';
+      addMessage(message, 'bot');
+      speak(message);
+      return;
     }
-    
+
+    const answer = `<strong>${escapeHTML(result.title)}</strong><p>${escapeHTML(result.extract)}</p><p>Source: <a href="${escapeHTML(result.url)}">Wikipedia (CC BY-SA)</a></p>`;
     addMessage(answer, 'bot');
-    speak(answer);
-
-  } catch (e) {
-    console.error('AI API error, falling back to web search:', e);
-    
-    // Fallback to DuckDuckGo search if AI fails
-    try {
-      const proxy = 'https://api.allorigins.win/get?url=';
-      const duckUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-      const response = await fetch(proxy + encodeURIComponent(duckUrl));
-      const data = await response.json();
-      const html = data.contents;
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const snippet = doc.querySelector('.result__snippet');
-
-      chatMessages.removeChild(tempMessage);
-
-      let answer = snippet ? snippet.textContent.trim() : "Sorry, I couldn't find a clear answer to your question.";
-      
-      if (answer.length > 500) {
-        answer = answer.substring(0, 500) + '...';
-      }
-      
-      addMessage(answer, 'bot');
-      speak(answer);
-
-    } catch (searchError) {
-      console.error('Search error:', searchError);
-      chatMessages.removeChild(tempMessage);
-      const fallback = "Sorry, I couldn't fetch the answer right now. Please try again later.";
-      addMessage(fallback, 'bot');
-      speak(fallback);
-    }
+    speak(`${result.title}. ${result.extract}`);
+  } catch (error) {
+    console.error('Wikipedia lookup failed:', error);
+    if (tempMessage.isConnected) chatMessages.removeChild(tempMessage);
+    const message = 'I could not reach Wikipedia right now. Check your connection and try again.';
+    addMessage(message, 'bot');
+    speak(message);
   }
 }
 
@@ -1008,7 +982,10 @@ micButton.addEventListener('click', function() {
 
 
 sidebarOverlay.addEventListener('click', closeSidebar);
-newChatBtn.addEventListener('click', startNewChat);
+newChatBtn.addEventListener('click', () => {
+  startNewChat();
+  closeSidebar();
+});
 searchChats.addEventListener('input', renderChatHistory);
 clearHistoryBtn.addEventListener('click', clearAllHistory);
 confirmCancel.addEventListener('click', hideConfirmDialog);
@@ -1025,70 +1002,22 @@ confirmDialog.addEventListener('click', function(e) {
   }
 });
 
-chatMessages.addEventListener('click', function(e) {
-    if (e.target.classList.contains('download-option-btn')) {
-        const format = e.target.dataset.format;
-        simulateYouTubeDownload(format);
-    }
-});
-
-
 loginBtn.addEventListener('click', () => {
     loginModal.style.display = 'block';
 });
 
-// Create Account link handler - Add this AFTER loginBtn definition
+// Create Account link handler
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait for DOM to be ready, then attach listener
     setTimeout(() => {
         const createAccountLink = document.getElementById('createAccountLink');
         if (createAccountLink) {
             createAccountLink.addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
-                console.log('Create account clicked');
-                
-                // Hide login
-                loginModal.style.display = 'none';
-                loginForm.reset();
-                
-                // Show registration
-                registrationModal.style.display = 'flex';
-                registrationModal.classList.add('active');
+                showRegistrationModal();
             });
-        } else {
-            console.error('createAccountLink not found');
         }
     }, 100);
 });
-
-// Show registration modal when clicking "Create Account" 
-document.addEventListener('DOMContentLoaded', function() {
-  // Make sure registration modal shows on first visit
-  const regAccountBtn = document.querySelector('.registration-footer a') || 
-                       document.getElementById('showLoginLink');
-  
-  if (regAccountBtn) {
-    regAccountBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      showRegistrationModal();
-    });
-  }
-});
-
-// Make sure these functions are properly defined
-function showRegistrationModal() {
-  registrationModal.classList.add('active');
-  registrationModal.style.display = 'flex';
-  loginModal.classList.remove('active');
-  loginModal.style.display = 'none';
-}
-
-function showLoginModal() {
-  loginModal.style.display = 'block';
-  registrationModal.classList.remove('active');
-  registrationModal.style.display = 'none';
-}
 
 logoutBtn.addEventListener('click', () => {
     // Stop update checks
@@ -1107,23 +1036,6 @@ logoutBtn.addEventListener('click', () => {
     
     addMessage("You have been logged out successfully.", 'bot');
     speak("You have been logged out successfully.");
-});
-
-closeLoginModal.addEventListener('click', (e) => {
-    e.preventDefault();
-    console.log('Closing login modal');
-    loginModal.style.display = 'none';
-    loginForm.reset();
-});
-
-// Replace the closeRegistrationModal listener
-closeRegistrationModal.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Closing registration modal');
-    registrationModal.style.display = 'none';
-    registrationModal.classList.remove('active');
-    registrationForm.reset();
 });
 
 // Replace the existing desktopDownloadBtn click listener
@@ -1328,12 +1240,6 @@ downloadChatBtn.addEventListener('click', downloadChat);
 
 
 // Add this function to check if it's first visit
-function checkFirstVisit() {
-    if (!localStorage.getItem('vera_visited') && registrationModal) {
-        registrationModal.style.display = 'block';
-        localStorage.setItem('vera_visited', 'true');
-    }
-}
 
 // Add registration form handler
 registrationForm.addEventListener('submit', async (e) => {
@@ -1424,7 +1330,6 @@ closeLoginModal.addEventListener('click', (e) => {
     loginForm.reset();
 });
 
-// Replace the showLoginLink handler (around line 1085):
 showLoginLink.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1465,11 +1370,6 @@ window.addEventListener('click', (event) => {
     }
 });
 
-// Call checkFirstVisit when the page loads
-document.addEventListener('DOMContentLoaded', function() {
-    checkFirstVisit();
-    // ... existing DOMContentLoaded code ...
-});
 
 // Add this function near the top with other utility functions
 function checkConnectivity() {
@@ -1686,46 +1586,22 @@ function updateUIWithUserData() {
     // Update chat messages with new profile picture
     const userAvatars = document.querySelectorAll('.user-message .message-avatar');
     userAvatars.forEach(avatar => {
-        const pfp = userData[currentUser]?.profilePicture ? 
-            `<img src="${userData[currentUser].profilePicture}" alt="PFP" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;">` :
-            currentUser.charAt(0).toUpperCase();
-        avatar.innerHTML = pfp;
+        const profileImage = userData[currentUser]?.profilePicture;
+        avatar.textContent = '';
+        if (profileImage && profileImage.startsWith('data:image/')) {
+            const image = document.createElement('img');
+            image.src = profileImage;
+            image.alt = 'Profile';
+            image.className = 'message-profile-picture';
+            avatar.appendChild(image);
+        } else {
+            avatar.textContent = currentUser.charAt(0).toUpperCase();
+        }
     });
 
     // Trigger chat history refresh to update any visible user data
     renderChatHistory();
 }
-
-// Add this function to the end of your script.js
-function initModals() {
-    // Close modals when clicking outside of them
-    window.addEventListener('click', (event) => {
-        if (event.target == loginModal) {
-            loginModal.style.display = 'none';
-        }
-        if (event.target == registrationModal) {
-            registrationModal.style.display = 'none';
-        }
-        if (event.target == downloadModal) {
-            downloadModal.style.display = 'none';
-        }
-        if (event.target == guidanceModal) {
-            guidanceModal.style.display = 'none';
-        }
-        if (event.target == feedbackModal) {
-            feedbackModal.style.display = 'none';
-        }
-        if (event.target == forgotPasswordModal) {
-            forgotPasswordModal.style.display = 'none';
-        }
-        if (event.target == userProfileModal) {
-            userProfileModal.style.display = 'none';
-        }
-    });
-}
-
-// Call initModals after all event listeners
-initModals();
 
 // Add after other event listeners
 loginForm.addEventListener('submit', async (e) => {
@@ -1846,14 +1722,6 @@ function switchToRegistration() {
     registrationModal.classList.add('active');
 }
 
-function switchToLogin() {
-    registrationModal.style.display = 'none';
-    registrationModal.classList.remove('active');
-    registrationForm.reset();
-    
-    loginModal.style.display = 'flex';
-}
-
 async function makeAPIRequest(action, params) {
     try {
         const queryString = new URLSearchParams(params).toString();
@@ -1944,4 +1812,3 @@ function handleLogin(e, ss) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
-
