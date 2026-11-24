@@ -46,6 +46,20 @@ body.light-mode {
   --profile-save-btn-hover-bg: #059669;
 }
 
+:root {
+  --primary-bg:
+    radial-gradient(ellipse at 75% 0%, rgba(37, 99, 235, 0.18), transparent 42%),
+    linear-gradient(145deg, #0b1120 0%, #111a2e 54%, #101827 100%);
+  --sidebar-bg: rgba(11, 17, 32, 0.88);
+  --sidebar-border: rgba(148, 163, 184, 0.16);
+  --header-bg: rgba(11, 17, 32, 0.58);
+  --button-bg: rgba(148, 163, 184, 0.08);
+  --button-hover-bg: rgba(148, 163, 184, 0.15);
+  --input-bg: rgba(15, 23, 42, 0.72);
+  --message-bot-bg: rgba(30, 41, 59, 0.72);
+  --message-user-bg: rgba(16, 185, 129, 0.17);
+}
+
 
 * {
   margin: 0;
@@ -58,6 +72,7 @@ body {
   background: var(--primary-bg);
   color: var(--text-color);
   height: 100vh;
+  height: 100dvh;
   display: flex;
   overflow: hidden;
   position: relative;
@@ -79,7 +94,7 @@ body {
   align-items: center;
   z-index: 9999;
   opacity: 1;
-  transition: opacity 1s ease-out;
+  transition: opacity 0.4s ease-out;
   background-color: #111827;
 }
 
@@ -1271,6 +1286,7 @@ body.light-mode .welcome-subtitle {
 }
 
 .example-prompt {
+  width: 100%;
   background: var(--button-bg);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1279,6 +1295,8 @@ body.light-mode .welcome-subtitle {
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
+  color: var(--text-color);
+  font: inherit;
   position: relative;
   overflow: hidden;
 }
@@ -1318,8 +1336,23 @@ body.light-mode .example-prompt:hover {
 }
 
 .example-prompt-subtitle {
+  display: block;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.example-prompt-title {
+  display: block;
+}
+
+.guidance-download-link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #60a5fa;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 body.light-mode .example-prompt-subtitle {
@@ -2294,4 +2327,140 @@ body.light-mode .modal-footer-link a {
 body.light-mode .modal-footer-link a:hover {
   color: #0052a3;
   text-decoration: underline;
+}
+
+.message-profile-picture {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+button:focus-visible,
+a:focus-visible,
+.example-prompt:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(86vw, 300px);
+    height: 100vh;
+    height: 100dvh;
+    margin-left: 0;
+    transform: translateX(0);
+    transition: transform 0.25s ease;
+    z-index: 1100;
+  }
+
+  .sidebar.collapsed {
+    margin-left: 0;
+    transform: translateX(-100%);
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(2, 6, 23, 0.58);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+  }
+
+  .sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .header {
+    min-height: 56px;
+  }
+
+  .chat-messages {
+    padding: 16px 14px;
+  }
+
+  .welcome-section {
+    padding: 24px 12px;
+  }
+
+  .welcome-title {
+    font-size: clamp(1.5rem, 7vw, 2rem);
+  }
+
+  .example-prompts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .example-prompt {
+    padding: 14px;
+  }
+
+  .input-section {
+    padding: 12px;
+  }
+
+  .download-modal-content {
+    margin: 4vh auto;
+    padding: 24px 18px;
+    max-height: 92vh;
+    max-height: 92dvh;
+  }
+
+  .download-platforms {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 12px;
+  }
+
+  .platform-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .message {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .example-prompts {
+    grid-template-columns: 1fr;
+  }
+
+  .desktop-download-btn {
+    right: 12px;
+  }
+
+  .mobile-toggle {
+    left: 12px;
+  }
+
+  .chat-input {
+    padding-left: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
