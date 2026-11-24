@@ -127,26 +127,25 @@
       <div class="chat-messages" id="chatMessages">
         <div class="welcome-section" id="welcomeSection">
           <h2 class="welcome-title">How can I help you today?</h2>
-          <p class="welcome-subtitle">Ask me anything - I can help with calculations, provide information, or just have
-            a conversation.</p>
+          <p class="welcome-subtitle">Ask a question, solve a calculation, or look up a topic in Wikipedia’s open knowledge base.</p>
 
           <div class="example-prompts">
-            <div class="example-prompt" onclick="fillPrompt('What time is it?')">
-              <div class="example-prompt-title">Current Time</div>
-              <div class="example-prompt-subtitle">Get the current time</div>
-            </div>
-            <div class="example-prompt" onclick="fillPrompt('What is 25 * 17?')">
-              <div class="example-prompt-title">Calculator</div>
-              <div class="example-prompt-subtitle">Solve math problems</div>
-            </div>
-            <div class="example-prompt" onclick="fillPrompt('VERA-AI Introduction')">
-              <div class="example-prompt-title">VERA-AI Introduction</div>
-              <div class="example-prompt-subtitle">Search for VERA-AI Introduction information</div>
-            </div>
-            <div class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
-              <div class="example-prompt-title">Learn</div>
-              <div class="example-prompt-subtitle">Get information on any topic</div>
-            </div>
+            <button type="button" class="example-prompt" onclick="fillPrompt('What time is it?')">
+              <span class="example-prompt-title">Current Time</span>
+              <span class="example-prompt-subtitle">Get the current time</span>
+            </button>
+            <button type="button" class="example-prompt" onclick="fillPrompt('What is 25 * 17?')">
+              <span class="example-prompt-title">Calculator</span>
+              <span class="example-prompt-subtitle">Solve math problems</span>
+            </button>
+            <button type="button" class="example-prompt" onclick="fillPrompt('VERA-AI Introduction')">
+              <span class="example-prompt-title">VERA-AI Introduction</span>
+              <span class="example-prompt-subtitle">Search for VERA-AI Introduction information</span>
+            </button>
+            <button type="button" class="example-prompt" onclick="fillPrompt('Tell me about artificial intelligence')">
+              <span class="example-prompt-title">Learn</span>
+              <span class="example-prompt-subtitle">Get information on any topic</span>
+            </button>
           </div>
         </div>
       </div>
@@ -418,8 +417,9 @@
         </div>
 
         <ol class="guidance-steps">
-          <li>Download the correct version for your operating system (Windows, Mac, or Linux) from the <b
-              id="openDownloadModalFromGuidance" style="color: #3b82f6; cursor: pointer;">Download</b> section.</li>
+          <li>Download the correct version for your operating system (Windows, Mac, or Linux) from the
+            <button type="button" id="openDownloadModalFromGuidance" class="guidance-download-link">Download</button>
+            section.</li>
           <li>Unzip the downloaded file to a folder you can easily access.</li>
           <li>Run the `V.E.R.A.exe` (on Windows) or the corresponding executable for your system.</li>
           <li>Follow any on-screen prompts to install dependencies (like Python, if not already installed).</li>
@@ -440,7 +440,7 @@
           <li><code>open google.com</code> - Open any website in a new tab.</li>
           <li><code>open youtube</code> - Open common websites by name.</li>
           <li><em>(Paste a YouTube URL)</em> - V.E.R.A will offer to download the video as MP3 or MP4.</li>
-          <li><code>tell me about...</code> - Ask any general knowledge question for a web search.</li>
+          <li><code>tell me about...</code> - Look up an encyclopedic topic in Wikipedia.</li>
         </ul>
       </div>
 
